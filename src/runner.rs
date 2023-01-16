@@ -4,8 +4,8 @@ use skim::prelude::*;
 use item::Item;
 use crate::{Config, item};
 use std::fs;
+use std::path::PathBuf;
 use std::process::exit;
-use std::thread::sleep;
 use crate::git::Git;
 
 pub struct Runner {
@@ -44,6 +44,8 @@ impl Runner {
         tmp_dir.pop();
         tmp_dir.push("new");
         git.checkout_to(new_oid, tmp_dir.as_path());
+
+        self.abort();
     }
 
     fn prepare(&self) {
@@ -68,13 +70,6 @@ impl Runner {
             .build()
             .unwrap();
 
-        // Get Repo
-        // TODO: Repo should be built in config stage
-        // let repo = match Repository::discover("./") {
-        //     Ok(repo) => Arc::new(repo),
-        //     Err(_) => panic!("No repos found, try to create one?"),
-        // };
-
         // Init Channel
         let (tx, rx): (SkimItemSender, SkimItemReceiver) = unbounded();
 
@@ -90,14 +85,18 @@ impl Runner {
 
         drop(tx); // Notify Skim
 
-        let mut selected_item = Skim::run_with(&options, Some(rx))
-            .map(|out| out.selected_items)
-            .unwrap_or_else(Vec::new);
+        let out = Skim::run_with(&options, Some(rx)).unwrap();
+
+        if out.is_abort {
+            self.abort();
+        }
+
+        let mut selected_item = out.selected_items;
 
         // TODO: Error Handling
         if selected_item.len() > 1 {
             println!("{}", "More than one items are selected".red());
-            exit(1);
+            self.abort();
         } else if selected_item.len() <= 0 {
             println!("{}", "No item is selected".red());
             exit(1);
@@ -109,5 +108,16 @@ impl Runner {
             .downcast_ref::<Item>().unwrap();
 
         return item.oid;
+    }
+
+    fn abort(&self) {
+        // check dangerous operation
+        let root = PathBuf::from("/");
+        if self.config.tmp_dir == root {
+            exit(1);
+        }
+        // remove the tmp dir
+        fs::remove_dir_all(&self.config.tmp_dir).unwrap();
+        exit(0);
     }
 }
