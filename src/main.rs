@@ -3,6 +3,7 @@ mod util;
 mod git;
 mod item;
 mod runner;
+mod config;
 
 use args::Args;
 use clap::Parser;
@@ -12,18 +13,19 @@ extern crate skim;
 use skim::prelude::*;
 use std::io::Cursor;
 use git2::Repository;
+use crate::config::Config;
+use crate::runner::Runner;
 
 
 fn main() {
     let args: args::Args = args::Args::parse();
     println!("{:#?}", args);
 
-    runner::Runner::run();
+    let config = Config::from(args);
+    println!("{:#?}", config);
 
-    // get working dir
-    println!("{}", std::env::current_dir().unwrap().display());
-
-    // checkout_wrapper(oid, &repo);
+    let runner = Runner::new(config);
+    runner.run();
 }
 
 

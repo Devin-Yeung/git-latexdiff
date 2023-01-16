@@ -5,9 +5,17 @@ use clap::Parser;
 // #[clap(infer_subcommands(true))]
 pub struct Args {
     #[clap(long, short, value_parser, required(false))]
+    /// TODO
     pub latexdiff_path: Option<PathBuf>,
+    /// TODO
+    #[clap(long, short, value_parser, required(false))]
+    pub tmp_dir: Option<PathBuf>,
+    /// TODO
+    #[clap(long, short, value_parser, required(false))]
+    pub repo_dir: Option<PathBuf>,
     /// Target Directory to be zipped, current directory by default
-    #[clap(long, short, value_parser, required(false))] pub input: Option<PathBuf>,
+    #[clap(long, short, value_parser, required(false))]
+    pub input: Option<PathBuf>,
     /// Output file name, {parent_directory}.zip by default
     #[clap(long, short, value_parser, required(false))]
     pub output: Option<PathBuf>,
@@ -24,13 +32,13 @@ pub struct Args {
     #[clap(long, action = clap::ArgAction::SetTrue)]
     pub dry_run: bool,
     /// Ignore hidden files
-    #[clap(long, action = clap::ArgAction::SetTrue, default_value="false")]
+    #[clap(long, action = clap::ArgAction::SetTrue, default_value = "false")]
     pub ignore_hidden: bool,
     /// Read gitignore as part of .zipignore
-    #[clap(long, action = clap::ArgAction::SetTrue, default_value="false")]
+    #[clap(long, action = clap::ArgAction::SetTrue, default_value = "false")]
     pub read_gitignore: bool,
     /// Wrap all the files with output file name, parent file name by default
-    #[clap(long, action = clap::ArgAction::SetTrue, default_value="false")]
+    #[clap(long, action = clap::ArgAction::SetTrue, default_value = "false")]
     pub parent: bool,
 }
 

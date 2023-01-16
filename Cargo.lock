@@ -481,6 +481,7 @@ dependencies = [
 name = "git-latexdiff"
 version = "0.1.0"
 dependencies = [
+ "chrono",
  "clap 4.0.32",
  "crossterm",
  "git2",
