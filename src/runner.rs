@@ -1,12 +1,13 @@
+use crate::git::Git;
+use crate::latex::LaTeX;
+use crate::{item, latex, Config};
 use crossterm::style::Stylize;
 use git2::{Error, Oid, Repository};
-use skim::prelude::*;
 use item::Item;
-use crate::{Config, item};
+use skim::prelude::*;
 use std::fs;
 use std::path::PathBuf;
 use std::process::exit;
-use crate::git::Git;
 
 pub struct Runner {
     // TODO:
@@ -16,16 +17,14 @@ pub struct Runner {
 
 impl Runner {
     pub fn new(config: Config) -> Self {
-        let repo =
-            match Repository::discover(&config.repo_dir) {
-                Ok(repo) => { Arc::new(repo) }
-                Err(_) => { panic!("No repos found, try to create one?") }
-            };
+        let repo = match Repository::discover(&config.repo_dir) {
+            Ok(repo) => Arc::new(repo),
+            Err(_) => {
+                panic!("No repos found, try to create one?")
+            }
+        };
 
-        Runner {
-            config,
-            repo,
-        }
+        Runner { config, repo }
     }
 
     pub fn run(&self) {
@@ -38,13 +37,36 @@ impl Runner {
 
         // Checking out
         let git = Git::new(&self.config, self.repo.as_ref());
-        let mut tmp_dir = self.config.tmp_dir.clone();
-        tmp_dir.push("old");
-        git.checkout_to(old_oid, tmp_dir.as_path());
-        tmp_dir.pop();
-        tmp_dir.push("new");
-        git.checkout_to(new_oid, tmp_dir.as_path());
+        let mut old_dir = self.config.tmp_dir.clone();
+        let mut new_dir = self.config.tmp_dir.clone();
+        old_dir.push("old");
+        new_dir.push("new");
 
+        git.checkout_to(old_oid, old_dir.as_path());
+        git.checkout_to(new_oid, new_dir.as_path());
+
+        // Diff
+        let mut old_main_tex = old_dir.clone();
+        let mut new_main_tex = new_dir.clone();
+        let mut old_main_fl_tex = old_dir.clone();
+        let mut new_main_fl_tex = new_dir.clone();
+        let mut diff_tex = new_dir.clone();
+        old_main_tex.push(self.config.main_tex.file_name().unwrap());
+        new_main_tex.push(self.config.main_tex.file_name().unwrap());
+        diff_tex.push("diff.tex");
+        old_main_fl_tex.push(format!(
+            "fl_{}",
+            self.config.main_tex.file_name().unwrap().to_str().unwrap()
+        ));
+        new_main_fl_tex.push(format!(
+            "fl_{}",
+            self.config.main_tex.file_name().unwrap().to_str().unwrap()
+        ));
+
+        let tex = LaTeX::new(&self.config);
+        tex.expand(&old_main_tex, &old_main_fl_tex);
+        tex.expand(&new_main_tex, &new_main_fl_tex);
+        tex.diff(&old_main_fl_tex, &new_main_fl_tex, &diff_tex);
         self.abort();
     }
 
@@ -64,7 +86,7 @@ impl Runner {
         // TODO: options should be built in config stage
         let options = SkimOptionsBuilder::default()
             .reverse(true)
-            .height(Some("50%"))
+            // .height(Some("50%"))
             .multi(false)
             .preview(Some("")) // preview should be specified to enable preview window
             .build()
@@ -78,9 +100,10 @@ impl Runner {
         walk.push_head().unwrap();
 
         for oid in walk {
-            let _ = tx.send(Arc::from(
-                Item { repo: self.repo.clone(), oid: oid.unwrap() }
-            ));
+            let _ = tx.send(Arc::from(Item {
+                repo: self.repo.clone(),
+                oid: oid.unwrap(),
+            }));
         }
 
         drop(tx); // Notify Skim
@@ -104,8 +127,7 @@ impl Runner {
 
         let item = selected_item.pop().unwrap();
         println!("{}", item.output().green());
-        let item = (*item).as_any()
-            .downcast_ref::<Item>().unwrap();
+        let item = (*item).as_any().downcast_ref::<Item>().unwrap();
 
         return item.oid;
     }

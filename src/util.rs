@@ -1,13 +1,21 @@
 use crossterm::style::Stylize;
-use which::which;
 use std::io::Write;
+use which::which;
 
 fn health_check() -> std::io::Result<()> {
     // TODO: executable can also be passed by config
     let stdout = std::io::stdout();
     let mut stdout = stdout.lock();
 
-    let bins = vec!["latexdiff", "latexdiff-so", "latexpand", "pdflatex", "xelatex", "luatex", "bibtex"];
+    let bins = vec![
+        "latexdiff",
+        "latexdiff-so",
+        "latexpand",
+        "pdflatex",
+        "xelatex",
+        "luatex",
+        "bibtex",
+    ];
 
     let mut ready = true;
     for bin in bins {

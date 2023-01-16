@@ -1,5 +1,5 @@
-use std::path::PathBuf;
 use clap::Parser;
+use std::path::PathBuf;
 
 #[derive(Parser, Clone, Debug)]
 // #[clap(infer_subcommands(true))]
@@ -13,6 +13,8 @@ pub struct Args {
     /// TODO
     #[clap(long, short, value_parser, required(false))]
     pub repo_dir: Option<PathBuf>,
+    #[clap(long, short, value_parser, required(true))]
+    pub main_tex: Option<PathBuf>,
     /// Target Directory to be zipped, current directory by default
     #[clap(long, short, value_parser, required(false))]
     pub input: Option<PathBuf>,
@@ -41,4 +43,3 @@ pub struct Args {
     #[clap(long, action = clap::ArgAction::SetTrue, default_value = "false")]
     pub parent: bool,
 }
-
