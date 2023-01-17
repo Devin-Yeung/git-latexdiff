@@ -48,44 +48,27 @@ impl Runner {
         // Diff
         let mut old_main_tex = old_dir.clone();
         let mut new_main_tex = new_dir.clone();
-        let mut old_main_fl_tex = old_dir.clone();
-        let mut new_main_fl_tex = new_dir.clone();
+        old_main_tex.push(&self.config.main_tex);
+        new_main_tex.push(&self.config.main_tex);
         let mut diff_tex = new_dir.clone();
-        old_main_tex.push(self.config.main_tex.file_name().unwrap());
-        new_main_tex.push(self.config.main_tex.file_name().unwrap());
         diff_tex.push("diff.tex");
-        old_main_fl_tex.push(format!(
-            "fl_{}",
-            self.config.main_tex.file_name().unwrap().to_str().unwrap()
-        ));
-        new_main_fl_tex.push(format!(
-            "fl_{}",
-            self.config.main_tex.file_name().unwrap().to_str().unwrap()
-        ));
 
-        let tex = LaTeX::new(&self.config);
+        let tex = LaTeX::new(&self.config, &old_dir, Some(&old_main_tex));
 
         // Run pdflatex to generate aux file
-        tex.pdflatex(&old_main_tex);
-        tex.pdflatex(&new_main_tex);
+        tex.pdflatex(None)
+            .bibtex(None)
+            .expand(None, None, None);
 
-        // Get aux file
-        let old_aux = LaTeX::get_aux(&old_dir);
-        let new_aux = LaTeX::get_aux(&new_dir);
+        let tex = LaTeX::new(&self.config, &new_dir, Some(&new_main_tex));
 
-        tex.bibtex(old_aux.as_ref(), &old_dir);
-        tex.bibtex(new_aux.as_ref(), &new_dir);
-
-        // Get bbl file
-        let old_bbl = LaTeX::get_bbl(&old_dir);
-        let new_bbl = LaTeX::get_bbl(&new_dir);
-
-        // expand main tex
-        tex.expand(&old_main_tex, &old_main_fl_tex, old_bbl.as_ref());
-        tex.expand(&new_main_tex, &new_main_fl_tex, new_bbl.as_ref());
+        tex.pdflatex(None) // Run pdflatex to generate aux file
+            .bibtex(None)
+            .expand(None, None, None);
 
         // diff two flatten files
-        tex.diff(&old_main_fl_tex, &new_main_fl_tex, &diff_tex);
+        // TODO: need refactoring
+        // tex.diff(&old_main_fl_tex, &new_main_fl_tex, &diff_tex);
         self.abort();
     }
 
