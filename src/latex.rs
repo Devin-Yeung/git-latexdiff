@@ -8,6 +8,10 @@ use std::io::stderr;
 use std::path::{Path, PathBuf};
 use std::process::{Command, ExitStatus, Stdio};
 use clap::arg;
+use grep::regex::RegexMatcher;
+use grep::searcher::{BinaryDetection, SearcherBuilder};
+use grep::searcher::sinks::UTF8;
+use walkdir::WalkDir;
 
 pub struct LaTeX<'a> {
     config: &'a Config,
@@ -23,10 +27,46 @@ impl<'a> LaTeX<'a> {
         LaTeX { config, project_dir, main_tex }
     }
 
-    fn main_searcher() -> Option<&'a PathBuf> // FIXME: May have lifetime problems?
+    pub fn main_searcher(path: &PathBuf) -> Vec<PathBuf> // FIXME: May have lifetime problems?
     {
-        // TODO: see https://github.com/BurntSushi/ripgrep/blob/master/crates/grep/examples/simplegrep.rs
-        todo!()
+        // See https://github.com/BurntSushi/ripgrep/blob/master/crates/grep/examples/simplegrep.rs
+        // See https://docs.rs/grep-searcher/0.1.11/grep_searcher/index.html
+        let pattern = r"\\documentclass";
+        let matcher = RegexMatcher::new_line_matcher(&pattern).unwrap();
+        let mut searcher = SearcherBuilder::new()
+            .binary_detection(BinaryDetection::quit(b'\x00'))
+            .line_number(false)
+            .build();
+
+        let mut matches = Vec::<PathBuf>::new();
+
+        for result in WalkDir::new(path) {
+            let dent = match result {
+                Ok(dent) => dent,
+                Err(err) => {
+                    eprintln!("{}", err);
+                    continue;
+                }
+            };
+            // Skip if it is not a file or not a tex file
+            if !dent.file_type().is_file() || dent.path().extension().unwrap_or(OsStr::new("")) != "tex"
+            {
+                continue;
+            }
+
+            let result = searcher.search_path(
+                &matcher,
+                dent.path(),
+                UTF8(|_lnum, _line| {
+                    matches.push(dent.path().to_path_buf());
+                    Ok(true)
+                }),
+            );
+            if let Err(err) = result {
+                eprintln!("{}: {}", dent.path().display(), err);
+            }
+        }
+        matches
     }
 
     fn ext_finder(&self, ext: &str) -> Vec<PathBuf>
