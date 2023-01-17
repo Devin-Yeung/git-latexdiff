@@ -53,6 +53,7 @@ impl Runner {
         tex.pdflatex(None)
             .bibtex(None)
             .expand(None, None, None);
+        let old_main_tex = tex.main_tex;
 
         let tex = LaTeX::new(&self.config, &new_dir, None)
             .unwrap_or_else(|| { self.abort() });
@@ -60,12 +61,12 @@ impl Runner {
         tex.pdflatex(None) // Run pdflatex to generate aux file
             .bibtex(None)
             .expand(None, None, None);
+        let new_main_tex = tex.main_tex;
 
-        let mut diff_tex = tex.main_tex.parent().unwrap().to_path_buf();
-        diff_tex.push("diff.tex");
         // diff two flatten files
-        // TODO: need refactoring
-        // tex.diff(&old_main_fl_tex, &new_main_fl_tex, &diff_tex);
+        let mut diff_tex = new_main_tex.clone().parent().unwrap().to_path_buf();
+        diff_tex.push("diff.tex");
+        LaTeX::diff(&self.config, &old_main_tex, &new_main_tex, &diff_tex);
         self.abort();
     }
 

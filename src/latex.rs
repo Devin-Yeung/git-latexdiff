@@ -244,7 +244,7 @@ impl<'a> LaTeX<'a> {
         self
     }
 
-    pub fn diff(&self, old: &PathBuf, new: &PathBuf, out: &PathBuf) {
+    pub fn diff(config: &Config, old: &PathBuf, new: &PathBuf, out: &PathBuf) {
         print!(
             "{}",
             format!(
@@ -259,7 +259,7 @@ impl<'a> LaTeX<'a> {
         let diff_result = File::create(out).unwrap();
         let stdio = Stdio::from(diff_result);
 
-        let mut command = Command::new(&self.config.latexdiff_path);
+        let mut command = Command::new(&config.latexdiff_path);
 
         command
             .arg(&old)
