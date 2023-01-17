@@ -16,18 +16,36 @@ use walkdir::WalkDir;
 pub struct LaTeX<'a> {
     config: &'a Config,
     project_dir: &'a PathBuf,
-    main_tex: &'a PathBuf, // FIXME: May have lifetime problems?
+    pub main_tex: PathBuf,
 }
 
 impl<'a> LaTeX<'a> {
-    pub fn new(config: &'a Config, project_dir: &'a PathBuf, main_tex: Option<&'a PathBuf>) -> LaTeX<'a> {
+    pub fn new(config: &'a Config, project_dir: &'a PathBuf, main_tex: Option<&'a PathBuf>) -> Option<LaTeX<'a>> {
         // TODO: if main_tex if not given
-        // use main_searcher to find it
-        let main_tex = main_tex.unwrap();
-        LaTeX { config, project_dir, main_tex }
+        let main_tex = match main_tex {
+            Some(path) => { path.to_owned() }
+            // use main_searcher to find it
+            None => {
+                println!("{}", "Main TeX file is not given".yellow());
+                let mut matches = LaTeX::main_searcher(project_dir);
+                match matches.len() {
+                    0 => {
+                        println!("{}", "Searcher can't also guess one".red());
+                        return None;
+                    }
+                    _ => {
+                        let guess = matches.pop().unwrap();
+                        println!("{}", format!("Searcher guess main TeX is {}", &guess.display()).yellow());
+                        guess
+                    }
+                }
+            }
+        };
+
+        Some(LaTeX { config, project_dir, main_tex })
     }
 
-    pub fn main_searcher(path: &PathBuf) -> Vec<PathBuf> // FIXME: May have lifetime problems?
+    pub fn main_searcher(path: &PathBuf) -> Vec<PathBuf>
     {
         // See https://github.com/BurntSushi/ripgrep/blob/master/crates/grep/examples/simplegrep.rs
         // See https://docs.rs/grep-searcher/0.1.11/grep_searcher/index.html
@@ -35,7 +53,7 @@ impl<'a> LaTeX<'a> {
         let matcher = RegexMatcher::new_line_matcher(&pattern).unwrap();
         let mut searcher = SearcherBuilder::new()
             .binary_detection(BinaryDetection::quit(b'\x00'))
-            .line_number(false)
+            .line_number(true)
             .build();
 
         let mut matches = Vec::<PathBuf>::new();
@@ -93,7 +111,7 @@ impl<'a> LaTeX<'a> {
     {
         let main_tex = match file {
             Some(file) => { file }
-            None => { self.main_tex }
+            None => { &self.main_tex }
         };
 
         print!("{}", format!("Running pdfLaTeX for {} ...", main_tex.display()).yellow());
@@ -158,12 +176,12 @@ impl<'a> LaTeX<'a> {
     {
         let file = match file {
             Some(file) => { file }
-            None => { self.main_tex }
+            None => { &self.main_tex }
         };
 
         let out = match out {
             Some(out) => { out }
-            None => { self.main_tex }
+            None => { &self.main_tex }
         };
 
 

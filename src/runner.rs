@@ -46,26 +46,23 @@ impl Runner {
         git.checkout_to(new_oid, new_dir.as_path());
 
         // Diff
-        let mut old_main_tex = old_dir.clone();
-        let mut new_main_tex = new_dir.clone();
-        old_main_tex.push(&self.config.main_tex);
-        new_main_tex.push(&self.config.main_tex);
-        let mut diff_tex = new_dir.clone();
-        diff_tex.push("diff.tex");
-
-        let tex = LaTeX::new(&self.config, &old_dir, Some(&old_main_tex));
+        let tex = LaTeX::new(&self.config, &old_dir, None)
+            .unwrap_or_else(|| { self.abort() });
 
         // Run pdflatex to generate aux file
         tex.pdflatex(None)
             .bibtex(None)
             .expand(None, None, None);
 
-        let tex = LaTeX::new(&self.config, &new_dir, Some(&new_main_tex));
+        let tex = LaTeX::new(&self.config, &new_dir, None)
+            .unwrap_or_else(|| { self.abort() });
 
         tex.pdflatex(None) // Run pdflatex to generate aux file
             .bibtex(None)
             .expand(None, None, None);
 
+        let mut diff_tex = tex.main_tex.parent().unwrap().to_path_buf();
+        diff_tex.push("diff.tex");
         // diff two flatten files
         // TODO: need refactoring
         // tex.diff(&old_main_fl_tex, &new_main_fl_tex, &diff_tex);
@@ -134,7 +131,7 @@ impl Runner {
         return item.oid;
     }
 
-    fn abort(&self) {
+    fn abort(&self) -> ! {
         // check dangerous operation
         let root = PathBuf::from("/");
         if self.config.tmp_dir == root {
