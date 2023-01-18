@@ -14,18 +14,18 @@ impl<'a> Git<'a> {
     }
 
     pub fn checkout_to<P>(&self, commit_id: Oid, target_dir: P)
-    where
-        P: AsRef<Path>,
+        where
+            P: AsRef<Path>,
     {
         // TODO: Error Handling
         let commit = self.repo.find_commit(commit_id).unwrap();
         let root = commit.tree().unwrap().into_object();
 
-        let mut cob = CheckoutBuilder::new();
-
-        let cob = cob.target_dir(target_dir.as_ref()).recreate_missing(true);
-
-        self.repo.checkout_tree(&root, Some(cob)).unwrap();
-        // self.repo.checkout_head(Some(cob_ref)).unwrap();
+        self.repo.checkout_tree(&root, Some(
+            CheckoutBuilder::new()
+                .target_dir(target_dir.as_ref())
+                .recreate_missing(true)
+                .update_index(false) // <= prevent making index messy
+        )).unwrap();
     }
 }
