@@ -7,7 +7,7 @@ use std::fs;
 use std::path::PathBuf;
 use which::Path;
 
-#[derive(Debug)]
+// #[derive(Debug)]
 pub struct Config {
     pub repo_dir: PathBuf,
     pub tmp_dir: PathBuf,
@@ -15,25 +15,12 @@ pub struct Config {
     pub latexdiff_path: PathBuf,
     pub output: PathBuf,
     pub verbose: bool,
-    // skim_opts: SkimOptions<'static>
-}
-
-impl Config {
-    fn skim_default_options() -> SkimOptions<'static> {
-        SkimOptionsBuilder::default()
-            .reverse(true)
-            .multi(false)
-            .preview(Some("")) // preview should be specified to enable preview window
-            // .height(Some("50%")) // FIXME: if height is not 100%. it will be buggy
-            // See https://github.com/lotabout/skim/issues/494
-            .build()
-            .unwrap()
-    }
+    pub skim_opts: SkimOptions<'static>
 }
 
 impl From<Args> for Config {
     fn from(value: Args) -> Self {
-        ConfigBuilder::new()
+        ConfigBuilder::default()
             .repo_dir(value.repo_dir)
             .tmp_dir(value.tmp_dir)
             .latexdiff_path(value.latexdiff_path)
@@ -57,6 +44,7 @@ pub struct ConfigBuilder {
     main_tex: Option<PathBuf>,
     output: Option<PathBuf>,
     verbose: bool,
+    skim_opts: Option<SkimOptions<'static>>,
 }
 
 impl ConfigBuilder {
@@ -68,6 +56,7 @@ impl ConfigBuilder {
             main_tex: None,
             output: None,
             verbose: false,
+            skim_opts: None
         }
     }
 
@@ -147,6 +136,25 @@ impl ConfigBuilder {
         self
     }
 
+    fn skim_default_options() -> SkimOptions<'static> {
+        SkimOptionsBuilder::default()
+            .reverse(true)
+            .multi(false)
+            .preview(Some("")) // preview should be specified to enable preview window
+            // .height(Some("50%")) // FIXME: if height is not 100%. it will be buggy
+            // See https://github.com/lotabout/skim/issues/494
+            .build()
+            .unwrap()
+    }
+
+    pub fn skim_opts(mut self, opts: Option<SkimOptions<'static>>) -> Self {
+        self.skim_opts = match opts {
+            Some(_) => { opts }
+            None => { Some(ConfigBuilder::skim_default_options()) }
+        };
+        self
+    }
+
     pub fn build(self) -> Config {
         Config {
             repo_dir: self.repo_dir.unwrap(),
@@ -155,6 +163,7 @@ impl ConfigBuilder {
             latexdiff_path: self.latexdiff_path.unwrap(),
             output: self.output.unwrap(),
             verbose: self.verbose,
+            skim_opts: self.skim_opts.unwrap(),
         }
     }
 }
@@ -165,5 +174,9 @@ impl Default for ConfigBuilder {
             .repo_dir(None)
             .tmp_dir(None)
             .latexdiff_path(None)
+            .main_tex(None)
+            .output(None)
+            .skim_opts(None)
+            .verbose(false)
     }
 }

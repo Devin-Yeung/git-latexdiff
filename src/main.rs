@@ -22,7 +22,7 @@ fn main() {
     println!("{:#?}", args);
 
     let config = Config::from(args);
-    println!("{:#?}", config);
+    // println!("{:#?}", config);
 
     let runner = Runner::new(config);
     runner.run();

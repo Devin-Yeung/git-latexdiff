@@ -98,16 +98,6 @@ impl Runner {
     }
 
     pub fn select_oid(&self) -> Oid {
-        // Get options
-        // TODO: options should be built in config stage
-        let options = SkimOptionsBuilder::default()
-            .reverse(true)
-            // .height(Some("50%"))
-            .multi(false)
-            .preview(Some("")) // preview should be specified to enable preview window
-            .build()
-            .unwrap();
-
         // Init Channel
         let (tx, rx): (SkimItemSender, SkimItemReceiver) = unbounded();
 
@@ -124,7 +114,7 @@ impl Runner {
 
         drop(tx); // Notify Skim
 
-        let out = Skim::run_with(&options, Some(rx)).unwrap();
+        let out = Skim::run_with(&self.config.skim_opts, Some(rx)).unwrap();
 
         if out.is_abort {
             self.abort();
