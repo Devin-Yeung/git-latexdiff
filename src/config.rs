@@ -6,8 +6,10 @@ use skim::prelude::*;
 use std::fs;
 use std::path::PathBuf;
 use which::Path;
+use derivative::Derivative;
 
-// #[derive(Debug)]
+#[derive(Derivative)]
+#[derivative(Debug)]
 pub struct Config {
     pub repo_dir: PathBuf,
     pub tmp_dir: PathBuf,
@@ -15,6 +17,7 @@ pub struct Config {
     pub latexdiff_path: PathBuf,
     pub output: PathBuf,
     pub verbose: bool,
+    #[derivative(Debug="ignore")]
     pub skim_opts: SkimOptions<'static>
 }
 
