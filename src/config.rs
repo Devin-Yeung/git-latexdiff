@@ -18,6 +18,7 @@ pub struct Config {
     pub output: PathBuf,
     pub verbose: bool,
     pub debug: bool,
+    pub no_clean: bool,
     #[derivative(Debug="ignore")]
     pub skim_opts: SkimOptions<'static>
 }
@@ -32,6 +33,7 @@ impl From<Args> for Config {
             .output(value.output)
             .verbose(value.verbose)
             .debug(value.debug)
+            .no_clean(value.no_clean)
             .build()
     }
 }
@@ -49,6 +51,7 @@ pub struct ConfigBuilder {
     main_tex: Option<PathBuf>,
     output: Option<PathBuf>,
     verbose: bool,
+    no_clean: bool,
     skim_opts: Option<SkimOptions<'static>>,
     debug: bool,
 }
@@ -63,6 +66,7 @@ impl ConfigBuilder {
             output: None,
             verbose: false,
             debug: false,
+            no_clean: false,
             skim_opts: None
         }
     }
@@ -124,6 +128,11 @@ impl ConfigBuilder {
         self
     }
 
+    pub fn no_clean(mut self, on: bool) -> Self {
+        self.no_clean = on;
+        self
+    }
+
     pub fn output(mut self, path: Option<PathBuf>) -> Self {
 
         let mut path = match path {
@@ -176,6 +185,7 @@ impl ConfigBuilder {
             output: self.output.unwrap(),
             verbose: self.verbose,
             debug: self.debug,
+            no_clean: self.no_clean,
             skim_opts: self.skim_opts.unwrap(),
         }
     }
@@ -191,6 +201,7 @@ impl Default for ConfigBuilder {
             .output(None)
             .skim_opts(None)
             .verbose(false)
+            .no_clean(false)
             .debug(false)
     }
 }

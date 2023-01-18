@@ -25,8 +25,11 @@ pub struct Args {
     /// Verbose mode
     #[clap(long, action = clap::ArgAction::SetTrue, default_value = "false")]
     pub verbose: bool,
-    #[clap(long, value_parser, required(false))]
+    /// Do not clean the intermediate files.
+    #[clap(long, action = clap::ArgAction::SetTrue, default_value = "false")]
+    pub no_clean: bool,
     /// Specify the path of latexdiff executable
+    #[clap(long, value_parser, required(false))]
     pub latexdiff_path: Option<PathBuf>,
     /// Health Check
     #[clap(long, action = clap::ArgAction::SetTrue, default_value = "false")]

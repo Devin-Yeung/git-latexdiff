@@ -148,7 +148,9 @@ impl Runner {
             exit(1);
         }
         // remove the tmp dir
-        fs::remove_dir_all(&self.config.tmp_dir).unwrap();
+        if !self.config.no_clean {
+            fs::remove_dir_all(&self.config.tmp_dir).unwrap();
+        }
         exit(0);
     }
 }
