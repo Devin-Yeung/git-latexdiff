@@ -67,6 +67,22 @@ impl Runner {
         let mut diff_tex = new_main_tex.clone().parent().unwrap().to_path_buf();
         diff_tex.push("diff.tex");
         LaTeX::diff(&self.config, &old_main_tex, &new_main_tex, &diff_tex);
+
+        // building stage
+        let tex = LaTeX::new(&self.config, &new_dir, Some(&diff_tex))
+            .unwrap_or_else(|| { self.abort() });
+
+        tex.pdflatex(None) // Run pdflatex to generate aux file
+            .pdflatex(None)
+            .pdflatex(None);
+
+        let mut diff_pdf = tex.main_tex;
+        diff_pdf.set_extension("pdf");
+
+        let mut out_pdf = std::env::current_dir().unwrap();
+        out_pdf.push("diff.pdf");
+        fs::copy(diff_pdf, out_pdf).unwrap();
+
         self.abort();
     }
 
