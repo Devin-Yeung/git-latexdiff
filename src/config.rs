@@ -1,11 +1,11 @@
 use crate::args;
 use args::Args;
 use chrono::prelude::*;
-use git2::Repository;
+
 use skim::prelude::*;
 use std::fs;
 use std::path::PathBuf;
-use which::Path;
+
 use derivative::Derivative;
 
 #[derive(Derivative)]

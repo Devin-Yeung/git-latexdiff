@@ -2,12 +2,11 @@ use std::ffi::OsStr;
 use std::fs;
 use crate::Config;
 use crossterm::style::Stylize;
-use skim::SkimItem;
 use std::fs::File;
-use std::io::stderr;
-use std::path::{Path, PathBuf};
-use std::process::{Command, ExitStatus, Stdio};
-use clap::arg;
+
+use std::path::{PathBuf};
+use std::process::{Command, Stdio};
+
 use grep::regex::RegexMatcher;
 use grep::searcher::{BinaryDetection, SearcherBuilder};
 use grep::searcher::sinks::UTF8;

@@ -1,7 +1,7 @@
 use crossterm::style::Stylize;
-use git2::{Commit, Oid, Repository};
+use git2::{Oid, Repository};
 use skim::prelude::*;
-use std::collections::VecDeque;
+
 
 pub struct Item {
     pub repo: Arc<Repository>,

@@ -1,8 +1,8 @@
 use crate::git::Git;
 use crate::latex::LaTeX;
-use crate::{item, latex, Config};
+use crate::{item, Config};
 use crossterm::style::Stylize;
-use git2::{Error, Oid, Repository};
+use git2::{Oid, Repository};
 use item::Item;
 use skim::prelude::*;
 use std::fs;
