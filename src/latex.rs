@@ -1,15 +1,15 @@
-use std::ffi::OsStr;
-use std::fs;
 use crate::Config;
 use crossterm::style::Stylize;
+use std::ffi::OsStr;
+use std::fs;
 use std::fs::File;
 
-use std::path::{PathBuf};
+use std::path::PathBuf;
 use std::process::{Command, Stdio};
 
 use grep::regex::RegexMatcher;
-use grep::searcher::{BinaryDetection, SearcherBuilder};
 use grep::searcher::sinks::UTF8;
+use grep::searcher::{BinaryDetection, SearcherBuilder};
 use walkdir::WalkDir;
 
 pub struct LaTeX<'a> {
@@ -19,10 +19,14 @@ pub struct LaTeX<'a> {
 }
 
 impl<'a> LaTeX<'a> {
-    pub fn new(config: &'a Config, project_dir: &'a PathBuf, main_tex: Option<&'a PathBuf>) -> Option<LaTeX<'a>> {
+    pub fn new(
+        config: &'a Config,
+        project_dir: &'a PathBuf,
+        main_tex: Option<&'a PathBuf>,
+    ) -> Option<LaTeX<'a>> {
         // TODO: if main_tex if not given
         let main_tex = match main_tex {
-            Some(path) => { path.to_owned() }
+            Some(path) => path.to_owned(),
             // use main_searcher to find it
             None => {
                 print!("{}", "Main TeX file is not given.".yellow());
@@ -34,18 +38,24 @@ impl<'a> LaTeX<'a> {
                     }
                     _ => {
                         let guess = matches.pop().unwrap();
-                        println!("{}", format!("Searcher guess main TeX is {}", &guess.display()).yellow());
+                        println!(
+                            "{}",
+                            format!("Searcher guess main TeX is {}", &guess.display()).yellow()
+                        );
                         guess
                     }
                 }
             }
         };
 
-        Some(LaTeX { config, project_dir, main_tex })
+        Some(LaTeX {
+            config,
+            project_dir,
+            main_tex,
+        })
     }
 
-    pub fn main_searcher(path: &PathBuf) -> Vec<PathBuf>
-    {
+    pub fn main_searcher(path: &PathBuf) -> Vec<PathBuf> {
         // See https://github.com/BurntSushi/ripgrep/blob/master/crates/grep/examples/simplegrep.rs
         // See https://docs.rs/grep-searcher/0.1.11/grep_searcher/index.html
         let pattern = r"\\documentclass";
@@ -66,7 +76,8 @@ impl<'a> LaTeX<'a> {
                 }
             };
             // Skip if it is not a file or not a tex file
-            if !dent.file_type().is_file() || dent.path().extension().unwrap_or(OsStr::new("")) != "tex"
+            if !dent.file_type().is_file()
+                || dent.path().extension().unwrap_or(OsStr::new("")) != "tex"
             {
                 continue;
             }
@@ -86,8 +97,7 @@ impl<'a> LaTeX<'a> {
         matches
     }
 
-    fn ext_finder(&self, ext: &str) -> Vec<PathBuf>
-    {
+    fn ext_finder(&self, ext: &str) -> Vec<PathBuf> {
         let mut res = Vec::<PathBuf>::new();
 
         let paths = fs::read_dir(self.project_dir).unwrap();
@@ -106,14 +116,16 @@ impl<'a> LaTeX<'a> {
     }
 
     /// pass in main tex as `file`
-    pub fn pdflatex(&self, file: Option<&PathBuf>) -> &Self
-    {
+    pub fn pdflatex(&self, file: Option<&PathBuf>) -> &Self {
         let main_tex = match file {
-            Some(file) => { file }
-            None => { &self.main_tex }
+            Some(file) => file,
+            None => &self.main_tex,
         };
 
-        print!("{}", format!("Running pdfLaTeX for {} ...", main_tex.display()).yellow());
+        print!(
+            "{}",
+            format!("Running pdfLaTeX for {} ...", main_tex.display()).yellow()
+        );
         let mut command = Command::new("pdflatex"); // FIXME: specify pdflatex path
         command
             .arg(main_tex)
@@ -133,13 +145,14 @@ impl<'a> LaTeX<'a> {
         self
     }
 
-    pub fn bibtex(&self, file: Option<&PathBuf>) -> &Self
-    {
+    pub fn bibtex(&self, file: Option<&PathBuf>) -> &Self {
         let aux = match file {
             // if aux is not given, find in the project dir
             None => {
                 let aux = self.ext_finder("aux").pop();
-                if aux.is_none() { return &self; }
+                if aux.is_none() {
+                    return &self;
+                }
                 let mut aux = aux.unwrap();
                 aux.set_extension("");
                 aux
@@ -150,7 +163,10 @@ impl<'a> LaTeX<'a> {
                 aux
             }
         };
-        print!("{}", format!("Running bibtex for {} ...", aux.display()).yellow());
+        print!(
+            "{}",
+            format!("Running bibtex for {} ...", aux.display()).yellow()
+        );
 
         let mut command = Command::new("bibtex"); // FIXME: specify bibtex path
 
@@ -171,18 +187,21 @@ impl<'a> LaTeX<'a> {
         &self
     }
 
-    pub fn expand(&self, file: Option<&PathBuf>, out: Option<&PathBuf>, bbl: Option<&PathBuf>) -> &Self
-    {
+    pub fn expand(
+        &self,
+        file: Option<&PathBuf>,
+        out: Option<&PathBuf>,
+        bbl: Option<&PathBuf>,
+    ) -> &Self {
         let file = match file {
-            Some(file) => { file }
-            None => { &self.main_tex }
+            Some(file) => file,
+            None => &self.main_tex,
         };
 
         let out = match out {
-            Some(out) => { out }
-            None => { &self.main_tex }
+            Some(out) => out,
+            None => &self.main_tex,
         };
-
 
         let mut real_out = out.to_owned();
         if file == out {
@@ -195,15 +214,16 @@ impl<'a> LaTeX<'a> {
             real_out.push(format!("_{}", tmp.to_str().unwrap()));
         }
 
-
         let bbl = match bbl {
             // if bbl is not given, find in the project dir
-            Some(bbl) => {
-                bbl.to_owned()
-            }
+            Some(bbl) => bbl.to_owned(),
             None => {
                 let bbl = self.ext_finder("bbl").pop();
-                if bbl.is_none() { return &self; } else { bbl.unwrap() }
+                if bbl.is_none() {
+                    return &self;
+                } else {
+                    bbl.unwrap()
+                }
             }
         };
 
@@ -214,7 +234,7 @@ impl<'a> LaTeX<'a> {
                 &file.display(),
                 &out.display()
             )
-                .yellow()
+            .yellow()
         );
 
         let mut command = Command::new("latexpand"); // FIXME: specify latexpand path
@@ -226,7 +246,7 @@ impl<'a> LaTeX<'a> {
             .arg("--expand-bbl")
             .arg(&bbl)
             .current_dir(&file.parent().unwrap()); // The working directory should be set
-        // TODO: bibtex support
+                                                   // TODO: bibtex support
 
         let ecode = command.spawn().unwrap().wait().unwrap();
 
@@ -252,7 +272,7 @@ impl<'a> LaTeX<'a> {
                 new.display(),
                 out.display()
             )
-                .yellow()
+            .yellow()
         );
         // pipe to a standalone file
         let diff_result = File::create(out).unwrap();

@@ -2,7 +2,6 @@ use crossterm::style::Stylize;
 use git2::{Oid, Repository};
 use skim::prelude::*;
 
-
 pub struct Item {
     pub repo: Arc<Repository>,
     pub oid: Oid,

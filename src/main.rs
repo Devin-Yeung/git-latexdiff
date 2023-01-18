@@ -6,16 +6,12 @@ mod latex;
 mod runner;
 mod util;
 
-
 use clap::Parser;
 
 extern crate skim;
 
 use crate::config::Config;
 use crate::runner::Runner;
-
-
-
 
 fn main() {
     let args: args::Args = args::Args::parse();

@@ -19,8 +19,8 @@ pub struct Config {
     pub verbose: bool,
     pub debug: bool,
     pub no_clean: bool,
-    #[derivative(Debug="ignore")]
-    pub skim_opts: SkimOptions<'static>
+    #[derivative(Debug = "ignore")]
+    pub skim_opts: SkimOptions<'static>,
 }
 
 impl From<Args> for Config {
@@ -67,7 +67,7 @@ impl ConfigBuilder {
             verbose: false,
             debug: false,
             no_clean: false,
-            skim_opts: None
+            skim_opts: None,
         }
     }
 
@@ -137,14 +137,9 @@ impl ConfigBuilder {
     }
 
     pub fn output(mut self, path: Option<PathBuf>) -> Self {
-
         let mut path = match path {
-            Some(path) => {
-                path
-            }
-            None => {
-                std::env::current_dir().unwrap()
-            }
+            Some(path) => path,
+            None => std::env::current_dir().unwrap(),
         };
 
         // turn to absolute
@@ -173,8 +168,8 @@ impl ConfigBuilder {
 
     pub fn skim_opts(mut self, opts: Option<SkimOptions<'static>>) -> Self {
         self.skim_opts = match opts {
-            Some(_) => { opts }
-            None => { Some(ConfigBuilder::skim_default_options()) }
+            Some(_) => opts,
+            None => Some(ConfigBuilder::skim_default_options()),
         };
         self
     }

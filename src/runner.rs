@@ -47,17 +47,13 @@ impl Runner {
         git.checkout_to(new_oid, new_dir.as_path());
 
         println!("{}", "Stage[2/4] Expanding The TeX File".green());
-        let tex = LaTeX::new(&self.config, &old_dir, None)
-            .unwrap_or_else(|| { self.abort() });
+        let tex = LaTeX::new(&self.config, &old_dir, None).unwrap_or_else(|| self.abort());
 
         // Run pdflatex to generate aux file
-        tex.pdflatex(None)
-            .bibtex(None)
-            .expand(None, None, None);
+        tex.pdflatex(None).bibtex(None).expand(None, None, None);
         let old_main_tex = tex.main_tex;
 
-        let tex = LaTeX::new(&self.config, &new_dir, None)
-            .unwrap_or_else(|| { self.abort() });
+        let tex = LaTeX::new(&self.config, &new_dir, None).unwrap_or_else(|| self.abort());
 
         tex.pdflatex(None) // Run pdflatex to generate aux file
             .bibtex(None)
@@ -72,8 +68,8 @@ impl Runner {
 
         // building stage
         println!("{}", "Stage[4/4] Compiling Diff Result TeX file".green());
-        let tex = LaTeX::new(&self.config, &new_dir, Some(&diff_tex))
-            .unwrap_or_else(|| { self.abort() });
+        let tex =
+            LaTeX::new(&self.config, &new_dir, Some(&diff_tex)).unwrap_or_else(|| self.abort());
 
         tex.pdflatex(None) // Run pdflatex to generate aux file
             .pdflatex(None)
