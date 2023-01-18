@@ -11,8 +11,10 @@ use which::Path;
 pub struct Config {
     pub repo_dir: PathBuf,
     pub tmp_dir: PathBuf,
-    pub main_tex: PathBuf, // FIXME: main tex in different version may differ, fix this
+    pub main_tex: Option<PathBuf>, // FIXME: main tex in different version may differ, fix this
     pub latexdiff_path: PathBuf,
+    pub output: PathBuf,
+    pub verbose: bool,
     // skim_opts: SkimOptions<'static>
 }
 
@@ -36,6 +38,8 @@ impl From<Args> for Config {
             .tmp_dir(value.tmp_dir)
             .latexdiff_path(value.latexdiff_path)
             .main_tex(value.main_tex)
+            .output(value.output)
+            .verbose(value.verbose)
             .build()
     }
 }
@@ -51,6 +55,8 @@ pub struct ConfigBuilder {
     tmp_dir: Option<PathBuf>,
     latexdiff_path: Option<PathBuf>,
     main_tex: Option<PathBuf>,
+    output: Option<PathBuf>,
+    verbose: bool,
 }
 
 impl ConfigBuilder {
@@ -60,20 +66,28 @@ impl ConfigBuilder {
             tmp_dir: None,
             latexdiff_path: None,
             main_tex: None,
+            output: None,
+            verbose: false,
         }
     }
 
     pub fn repo_dir(mut self, path: Option<PathBuf>) -> Self {
-        match path {
+        let mut path = match path {
             Some(repo_dir) => {
                 // turn all the path to absolute dir
-                self.repo_dir = match repo_dir.is_absolute() {
-                    true => Some(repo_dir),
-                    false => Some(fs::canonicalize(repo_dir).unwrap()),
-                };
+                match repo_dir.is_absolute() {
+                    true => repo_dir,
+                    false => fs::canonicalize(repo_dir).unwrap(),
+                }
             }
-            None => self.repo_dir = Some(std::env::current_dir().unwrap()),
+            None => std::env::current_dir().unwrap(),
+        };
+
+        if path.is_file() {
+            path.pop();
         }
+        self.repo_dir = Some(path);
+
         self
     }
 
@@ -82,6 +96,9 @@ impl ConfigBuilder {
             Some(dir) => dir,
             None => std::env::current_dir().unwrap(),
         };
+        if tmp_dir.is_file() {
+            tmp_dir.pop();
+        }
         let now: DateTime<Local> = Local::now();
         tmp_dir.push(format!("build/tmp/git_latexdiff_{}", now.timestamp()));
         self.tmp_dir = Some(tmp_dir);
@@ -101,12 +118,43 @@ impl ConfigBuilder {
         self
     }
 
+    pub fn verbose(mut self, on: bool) -> Self {
+        self.verbose = on;
+        self
+    }
+
+    pub fn output(mut self, path: Option<PathBuf>) -> Self {
+
+        let mut path = match path {
+            Some(path) => {
+                path
+            }
+            None => {
+                std::env::current_dir().unwrap()
+            }
+        };
+
+        // turn to absolute
+        if !path.is_absolute() {
+            path = fs::canonicalize(path).unwrap()
+        }
+        // if given is a dir not a file, specify a file
+        if path.is_dir() {
+            path.push("diff.pdf");
+        }
+
+        self.output = Some(path);
+        self
+    }
+
     pub fn build(self) -> Config {
         Config {
             repo_dir: self.repo_dir.unwrap(),
             tmp_dir: self.tmp_dir.unwrap(),
-            main_tex: self.main_tex.unwrap(),
+            main_tex: self.main_tex,
             latexdiff_path: self.latexdiff_path.unwrap(),
+            output: self.output.unwrap(),
+            verbose: self.verbose,
         }
     }
 }
