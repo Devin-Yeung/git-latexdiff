@@ -100,7 +100,10 @@ impl ConfigBuilder {
             tmp_dir.pop();
         }
         let now: DateTime<Local> = Local::now();
-        tmp_dir.push(format!("build/tmp/git_latexdiff_{}", now.timestamp()));
+        // For better compatability
+        tmp_dir.push("build");
+        tmp_dir.push("tmp");
+        tmp_dir.push(format!("git_latexdiff_{}", now.timestamp()));
         self.tmp_dir = Some(tmp_dir);
         self
     }
