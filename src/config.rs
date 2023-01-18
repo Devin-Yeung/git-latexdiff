@@ -17,6 +17,7 @@ pub struct Config {
     pub latexdiff_path: PathBuf,
     pub output: PathBuf,
     pub verbose: bool,
+    pub debug: bool,
     #[derivative(Debug="ignore")]
     pub skim_opts: SkimOptions<'static>
 }
@@ -30,6 +31,7 @@ impl From<Args> for Config {
             .main_tex(value.main_tex)
             .output(value.output)
             .verbose(value.verbose)
+            .debug(value.debug)
             .build()
     }
 }
@@ -48,6 +50,7 @@ pub struct ConfigBuilder {
     output: Option<PathBuf>,
     verbose: bool,
     skim_opts: Option<SkimOptions<'static>>,
+    debug: bool,
 }
 
 impl ConfigBuilder {
@@ -59,6 +62,7 @@ impl ConfigBuilder {
             main_tex: None,
             output: None,
             verbose: false,
+            debug: false,
             skim_opts: None
         }
     }
@@ -115,6 +119,11 @@ impl ConfigBuilder {
         self
     }
 
+    pub fn debug(mut self, on: bool) -> Self {
+        self.debug = on;
+        self
+    }
+
     pub fn output(mut self, path: Option<PathBuf>) -> Self {
 
         let mut path = match path {
@@ -166,6 +175,7 @@ impl ConfigBuilder {
             latexdiff_path: self.latexdiff_path.unwrap(),
             output: self.output.unwrap(),
             verbose: self.verbose,
+            debug: self.debug,
             skim_opts: self.skim_opts.unwrap(),
         }
     }
@@ -181,5 +191,6 @@ impl Default for ConfigBuilder {
             .output(None)
             .skim_opts(None)
             .verbose(false)
+            .debug(false)
     }
 }

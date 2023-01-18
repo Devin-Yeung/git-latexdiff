@@ -19,10 +19,13 @@ use std::io::Cursor;
 
 fn main() {
     let args: args::Args = args::Args::parse();
-    println!("{:#?}", args);
 
     let config = Config::from(args);
-    println!("{:#?}", config);
+
+    if config.debug {
+        println!("{:#?}", args);
+        println!("{:#?}", config);
+    }
 
     let runner = Runner::new(config);
     runner.run();

@@ -30,8 +30,8 @@ pub struct Args {
     pub latexdiff_path: Option<PathBuf>,
     /// Health Check
     #[clap(long, action = clap::ArgAction::SetTrue, default_value = "false")]
-    health_check: bool,
+    pub health_check: bool,
     /// Turn debugging information on
     #[clap(long, action = clap::ArgAction::SetTrue, default_value = "false")]
-    debug: bool,
+    pub debug: bool,
 }
