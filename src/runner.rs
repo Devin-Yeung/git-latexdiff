@@ -36,6 +36,7 @@ impl Runner {
         // FIXME: selection can be aborted
 
         // Checking out
+        println!("{}", "Stage[1/4] Checking Out From Git Repo".green());
         let git = Git::new(&self.config, self.repo.as_ref());
         let mut old_dir = self.config.tmp_dir.clone();
         let mut new_dir = self.config.tmp_dir.clone();
@@ -45,7 +46,7 @@ impl Runner {
         git.checkout_to(old_oid, old_dir.as_path());
         git.checkout_to(new_oid, new_dir.as_path());
 
-        // Diff
+        println!("{}", "Stage[2/4] Expanding The TeX File".green());
         let tex = LaTeX::new(&self.config, &old_dir, None)
             .unwrap_or_else(|| { self.abort() });
 
@@ -64,11 +65,13 @@ impl Runner {
         let new_main_tex = tex.main_tex;
 
         // diff two flatten files
+        println!("{}", "Stage[3/4] Differing Two Flattened TeX file".green());
         let mut diff_tex = new_main_tex.clone().parent().unwrap().to_path_buf();
         diff_tex.push("diff.tex");
         LaTeX::diff(&self.config, &old_main_tex, &new_main_tex, &diff_tex);
 
         // building stage
+        println!("{}", "Stage[4/4] Compiling Diff Result TeX file".green());
         let tex = LaTeX::new(&self.config, &new_dir, Some(&diff_tex))
             .unwrap_or_else(|| { self.abort() });
 

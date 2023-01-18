@@ -19,11 +19,13 @@ use std::io::Cursor;
 
 fn main() {
     let args: args::Args = args::Args::parse();
+    if args.debug {
+        println!("{:#?}", args);
+    }
 
     let config = Config::from(args);
 
     if config.debug {
-        println!("{:#?}", args);
         println!("{:#?}", config);
     }
 

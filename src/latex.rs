@@ -26,7 +26,7 @@ impl<'a> LaTeX<'a> {
             Some(path) => { path.to_owned() }
             // use main_searcher to find it
             None => {
-                println!("{}", "Main TeX file is not given".yellow());
+                print!("{}", "Main TeX file is not given.".yellow());
                 let mut matches = LaTeX::main_searcher(project_dir);
                 match matches.len() {
                     0 => {
