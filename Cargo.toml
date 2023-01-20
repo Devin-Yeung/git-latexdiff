@@ -6,7 +6,9 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-git2 = "0.16"
+# We don't need ssh in this project, so we remove it from dependencies
+# See: https://github.com/rust-lang/git2-rs/issues/812
+git2 = { version = '0.16', default_features = false, features = [ "vendored-openssl", "vendored-libgit2" ]}
 which = "4.3.0"
 crossterm = "0.25.0"
 clap = { version='4', features = ['derive']}
