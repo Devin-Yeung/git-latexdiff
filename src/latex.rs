@@ -11,6 +11,7 @@ use grep::regex::RegexMatcher;
 use grep::searcher::sinks::UTF8;
 use grep::searcher::{BinaryDetection, SearcherBuilder};
 use walkdir::WalkDir;
+use clap::ValueEnum;
 
 pub struct LaTeX<'a> {
     config: &'a Config,
@@ -295,4 +296,12 @@ impl<'a> LaTeX<'a> {
             println!("{}", "FAIL".red());
         }
     }
+}
+
+
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Debug, ValueEnum)]
+pub enum Engine {
+    Pdflatex,
+    Xelatex,
+    Lualatex,
 }

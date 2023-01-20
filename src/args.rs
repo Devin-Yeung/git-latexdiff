@@ -1,9 +1,14 @@
 use clap::Parser;
 use std::path::PathBuf;
+use crate::latex;
+use latex::Engine;
 
 #[derive(Parser, Clone, Debug)]
 // #[clap(infer_subcommands(true))]
 pub struct Args {
+    /// Specify the engine that use to compile the documentation.
+    #[clap(long, value_enum, required(false))]
+    pub engine: Option<Engine>,
     /// Specify the directory to place the intermediate files.
     /// If not given, $PWD/build/tmp by default.
     #[clap(long, short, value_parser, required(false))]
