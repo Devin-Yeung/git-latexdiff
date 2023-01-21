@@ -5,6 +5,7 @@ mod item;
 mod latex;
 mod runner;
 mod util;
+mod error;
 
 use clap::Parser;
 
