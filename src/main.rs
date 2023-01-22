@@ -26,6 +26,15 @@ fn main() {
         println!("{:#?}", config);
     }
 
-    let runner = Runner::new(config);
-    runner.run();
+    let runner = Runner::new(config).unwrap_or_else(|err| {
+        // tmp dir is not created yet
+        println!("{}", err);
+        std::process::exit(1);
+    });
+
+    runner.run().unwrap_or_else(|err| {
+        runner.abort(Err(err));
+    });
+
+    runner.abort(Ok(()));
 }

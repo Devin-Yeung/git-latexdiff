@@ -12,6 +12,7 @@ use grep::searcher::sinks::UTF8;
 use grep::searcher::{BinaryDetection, SearcherBuilder};
 use walkdir::WalkDir;
 use clap::ValueEnum;
+use crate::error::{Error, ErrorKind};
 
 pub struct LaTeX<'a> {
     config: &'a Config,
@@ -24,7 +25,7 @@ impl<'a> LaTeX<'a> {
         config: &'a Config,
         project_dir: &'a PathBuf,
         main_tex: Option<&'a PathBuf>,
-    ) -> Option<LaTeX<'a>> {
+    ) -> Result<LaTeX<'a>, Error> {
         // TODO: if main_tex if not given
         let main_tex = match main_tex {
             Some(path) => path.to_owned(),
@@ -35,7 +36,7 @@ impl<'a> LaTeX<'a> {
                 match matches.len() {
                     0 => {
                         println!("{}", "Searcher can't also guess one".red());
-                        return None;
+                        return Err(Error::new(ErrorKind::MainTeXNotFound));
                     }
                     _ => {
                         let guess = matches.pop().unwrap();
@@ -49,7 +50,7 @@ impl<'a> LaTeX<'a> {
             }
         };
 
-        Some(LaTeX {
+        Ok(LaTeX {
             config,
             project_dir,
             main_tex,
