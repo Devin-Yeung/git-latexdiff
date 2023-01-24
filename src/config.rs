@@ -7,13 +7,15 @@ use std::fs;
 use std::path::PathBuf;
 
 use derivative::Derivative;
+use crate::error::{Error, ErrorKind};
 
 #[derive(Derivative)]
 #[derivative(Debug)]
 pub struct Config {
     pub repo_dir: PathBuf,
     pub tmp_dir: PathBuf,
-    pub main_tex: Option<PathBuf>, // FIXME: main tex in different version may differ, fix this
+    pub main_tex: Option<PathBuf>,
+    // FIXME: main tex in different version may differ, fix this
     pub latexdiff_path: PathBuf,
     pub output: PathBuf,
     pub verbose: bool,
@@ -77,7 +79,11 @@ impl ConfigBuilder {
                 // turn all the path to absolute dir
                 match repo_dir.is_absolute() {
                     true => repo_dir,
-                    false => fs::canonicalize(repo_dir).unwrap(),
+                    false => fs::canonicalize(repo_dir).unwrap_or(
+                        // if the given relative dir does not exist
+                        // fallback to current dir.
+                        std::env::current_dir().unwrap()
+                    ),
                 }
             }
             None => std::env::current_dir().unwrap(),

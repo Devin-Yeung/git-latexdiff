@@ -13,10 +13,12 @@ use grep::searcher::{BinaryDetection, SearcherBuilder};
 use walkdir::WalkDir;
 use clap::ValueEnum;
 use crate::error::{Error, ErrorKind};
+use crate::logger::Logger;
 
 pub struct LaTeX<'a> {
     config: &'a Config,
     project_dir: &'a PathBuf,
+    logger: &'a Logger,
     pub main_tex: PathBuf,
 }
 
@@ -24,6 +26,7 @@ impl<'a> LaTeX<'a> {
     pub fn new(
         config: &'a Config,
         project_dir: &'a PathBuf,
+        logger: &'a Logger,
         main_tex: Option<&'a PathBuf>,
     ) -> Result<LaTeX<'a>, Error> {
         // TODO: if main_tex if not given
@@ -31,19 +34,19 @@ impl<'a> LaTeX<'a> {
             Some(path) => path.to_owned(),
             // use main_searcher to find it
             None => {
-                print!("{}", "Main TeX file is not given.".yellow());
+                logger.warning("Main TeX file is not given.");
                 let mut matches = LaTeX::main_searcher(project_dir);
                 match matches.len() {
                     0 => {
-                        println!("{}", "Searcher can't also guess one".red());
+                        logger.warning("Searcher can't also guess one");
                         return Err(Error::new(ErrorKind::MainTeXNotFound));
                     }
                     _ => {
                         let guess = matches.pop().unwrap();
-                        println!(
-                            "{}",
-                            format!("Searcher guess main TeX is {}", &guess.display()).yellow()
+                        logger.info(
+                            format!("Searcher guess main TeX is {}", &guess.display()).as_ref()
                         );
+
                         guess
                     }
                 }
@@ -53,6 +56,7 @@ impl<'a> LaTeX<'a> {
         Ok(LaTeX {
             config,
             project_dir,
+            logger,
             main_tex,
         })
     }
@@ -107,12 +111,12 @@ impl<'a> LaTeX<'a> {
             let path = path.as_ref().unwrap().path();
             if path.extension().unwrap_or_else(|| OsStr::new("")) == ext {
                 // TODO: Enable me in verbose mode
-                println!("{}", format!("Found .{}: {}", ext, path.display()).yellow());
+                self.logger.info(format!("Found .{}: {}", ext, path.display()).as_ref());
                 res.push(path);
             }
         }
         if res.is_empty() {
-            println!("{}", format!(".{} Not Found!", ext).red());
+            self.logger.info(format!(".{} Not Found!", ext).as_ref());
         }
         return res;
     }
@@ -124,10 +128,7 @@ impl<'a> LaTeX<'a> {
             None => &self.main_tex,
         };
 
-        print!(
-            "{}",
-            format!("Running pdfLaTeX for {} ...", main_tex.display()).yellow()
-        );
+        self.logger.info(format!("Running pdfLaTeX for {} ...", main_tex.display()).as_ref());
         let mut command = Command::new("pdflatex"); // FIXME: specify pdflatex path
         command
             .arg(main_tex)
@@ -138,6 +139,7 @@ impl<'a> LaTeX<'a> {
 
         let ecode = command.spawn().unwrap().wait().unwrap();
 
+        // TODO: Refactor this later
         if ecode.success() {
             println!("{}", "SUCCESS".green());
         } else {
@@ -165,10 +167,8 @@ impl<'a> LaTeX<'a> {
                 aux
             }
         };
-        print!(
-            "{}",
-            format!("Running bibtex for {} ...", aux.display()).yellow()
-        );
+
+        self.logger.info(format!("Running bibtex for {} ...", aux.display()).as_ref());
 
         let mut command = Command::new("bibtex"); // FIXME: specify bibtex path
 
@@ -180,6 +180,7 @@ impl<'a> LaTeX<'a> {
 
         let ecode = command.spawn().unwrap().wait().unwrap();
 
+        // TODO: Refactor this later
         if ecode.success() {
             println!("{}", "SUCCESS".green());
         } else {
@@ -229,15 +230,8 @@ impl<'a> LaTeX<'a> {
             }
         };
 
-        print!(
-            "{}",
-            format!(
-                "Expanding {}\nTo =====> {} ...",
-                &file.display(),
-                &out.display()
-            )
-            .yellow()
-        );
+        self.logger.info(format!("Expanding Source: {}", &file.display()).as_ref());
+        self.logger.info(format!("Expanding Target: {}", &out.display()).as_ref());
 
         let mut command = Command::new("latexpand"); // FIXME: specify latexpand path
 
@@ -252,6 +246,7 @@ impl<'a> LaTeX<'a> {
 
         let ecode = command.spawn().unwrap().wait().unwrap();
 
+        // TODO: Refactor this later
         if ecode.success() {
             println!("{}", "SUCCESS".green());
         } else {
@@ -266,6 +261,7 @@ impl<'a> LaTeX<'a> {
     }
 
     pub fn diff(config: &Config, old: &PathBuf, new: &PathBuf, out: &PathBuf) {
+        // FIXME: this function need to be refactored
         print!(
             "{}",
             format!(
@@ -291,6 +287,7 @@ impl<'a> LaTeX<'a> {
 
         let ecode = command.spawn().unwrap().wait().unwrap();
 
+        // TODO: Refactor this later
         if ecode.success() {
             println!("{}", "SUCCESS".green());
         } else {

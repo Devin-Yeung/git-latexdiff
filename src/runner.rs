@@ -6,27 +6,34 @@ use git2::{Oid, Repository};
 use item::Item;
 use skim::prelude::*;
 use std::fs;
+use std::io::stdout;
 use std::path::PathBuf;
 use std::process::exit;
 use crate::error::{Error, ErrorKind};
+use crate::logger::{Logger, LogLevel};
 
 pub struct Runner {
-    // TODO:
     pub config: Config,
     pub repo: Arc<Repository>,
+    pub logger: Logger,
 }
 
 impl Runner {
     pub fn new(config: Config) -> std::result::Result<Self, Error> {
+        // Repo checker
         let repo = match Repository::discover(&config.repo_dir) {
             Ok(repo) => Arc::new(repo),
             Err(_) => { return Err(Error::new(ErrorKind::RepoNotFound(config.repo_dir))); }
         };
 
-        Ok(Runner { config, repo })
+        // logger write to stdout
+        // TODO: user can specify the log level, info by default
+        let logger = Logger::new(LogLevel::Info, stdout());
+
+        Ok(Runner { config, repo, logger })
     }
 
-    pub fn run(&self) -> std::result::Result<(), Error> {
+    pub fn run(&mut self) -> std::result::Result<(), Error> {
         self.prepare();
         println!("{}", "Please Choose the old version".green());
         let old_oid = self.select_oid();
@@ -35,7 +42,7 @@ impl Runner {
         // FIXME: selection can be aborted
 
         // Checking out
-        println!("{}", "Stage[1/4] Checking Out From Git Repo".green());
+        self.logger.info("Stage[1/4] Checking Out From Git Repo");
         let git = Git::new(&self.config, self.repo.as_ref());
         let mut old_dir = self.config.tmp_dir.clone();
         let mut new_dir = self.config.tmp_dir.clone();
@@ -45,8 +52,8 @@ impl Runner {
         git.checkout_to(old_oid, old_dir.as_path());
         git.checkout_to(new_oid, new_dir.as_path());
 
-        println!("{}", "Stage[2/4] Expanding The TeX File".green());
-        let tex = LaTeX::new(&self.config, &old_dir, None)?;
+        self.logger.info("Stage[2/4] Expanding The TeX File");
+        let tex = LaTeX::new(&self.config, &old_dir, &mut self.logger, None)?;
 
 
         tex.pdflatex(None) // Run pdflatex to generate aux file
@@ -54,7 +61,7 @@ impl Runner {
             .expand(None, None, None);
         let old_main_tex = tex.main_tex;
 
-        let tex = LaTeX::new(&self.config, &new_dir, None)?;
+        let tex = LaTeX::new(&self.config, &new_dir, &mut self.logger, None)?;
 
         tex.pdflatex(None) // Run pdflatex to generate aux file
             .bibtex(None)
@@ -62,14 +69,14 @@ impl Runner {
         let new_main_tex = tex.main_tex;
 
         // diff two flatten files
-        println!("{}", "Stage[3/4] Differing Two Flattened TeX file".green());
+        self.logger.info("Stage[3/4] Differing Two Flattened TeX file");
         let mut diff_tex = new_main_tex.clone().parent().unwrap().to_path_buf();
         diff_tex.push("diff.tex");
         LaTeX::diff(&self.config, &old_main_tex, &new_main_tex, &diff_tex);
 
         // building stage
-        println!("{}", "Stage[4/4] Compiling Diff Result TeX file".green());
-        let tex = LaTeX::new(&self.config, &new_dir, Some(&diff_tex))?;
+        self.logger.info("Stage[4/4] Compiling Diff Result TeX file");
+        let tex = LaTeX::new(&self.config, &new_dir, &mut self.logger, Some(&diff_tex))?;
 
         tex.pdflatex(None) // Run pdflatex to generate aux file
             .pdflatex(None)
@@ -96,7 +103,7 @@ impl Runner {
         fs::create_dir_all(tmp_dir.as_path()).expect("TODO: panic message");
     }
 
-    pub fn select_oid(&self) -> Oid {
+    pub fn select_oid(&mut self) -> Oid {
         // Init Channel
         let (tx, rx): (SkimItemSender, SkimItemReceiver) = unbounded();
 
@@ -137,7 +144,12 @@ impl Runner {
         return item.oid;
     }
 
-    pub fn abort(&self, err: std::result::Result<(), Error>) -> ! {
+    pub fn abort(&mut self, err: std::result::Result<(), Error>) -> ! {
+        // logging
+        match err {
+            Ok(_) => {}
+            Err(e) => { self.logger.error(&e.to_string()); }
+        }
         // check dangerous operation
         let root = PathBuf::from("/");
         if self.config.tmp_dir == root {

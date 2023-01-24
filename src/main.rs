@@ -13,9 +13,11 @@ use clap::Parser;
 extern crate skim;
 
 use crate::config::Config;
+use crate::logger::Logger;
 use crate::runner::Runner;
 
 fn main() {
+
     let args: args::Args = args::Args::parse();
     if args.debug {
         println!("{:#?}", args);
@@ -27,7 +29,7 @@ fn main() {
         println!("{:#?}", config);
     }
 
-    let runner = Runner::new(config).unwrap_or_else(|err| {
+    let mut runner = Runner::new(config).unwrap_or_else(|err| {
         // tmp dir is not created yet
         println!("{}", err);
         std::process::exit(1);
