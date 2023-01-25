@@ -95,7 +95,7 @@ impl Runner {
 
         let mut out_pdf = std::env::current_dir().unwrap();
         out_pdf.push("diff.pdf");
-        fs::copy(diff_pdf, out_pdf).unwrap();
+        fs::copy(diff_pdf, out_pdf).unwrap(); // TODO: add error type
 
         self.abort(Ok(()));
     }

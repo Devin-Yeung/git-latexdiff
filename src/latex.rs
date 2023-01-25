@@ -83,7 +83,7 @@ impl ConfigBuilder {
     }
 
     pub fn build(mut self) -> std::result::Result<Config, Error> {
-        let main_tex =  self.guess_main_tex()?;
+        let main_tex = self.guess_main_tex()?;
         Ok(Config {
             project_dir: self.project_dir,
             main_tex,
@@ -178,10 +178,10 @@ impl LaTeX {
         let ecode = command.spawn().unwrap().wait().unwrap();
 
         // TODO: Refactor this later
-        if ecode.success() {
-            println!("{}", "SUCCESS".green());
-        } else {
-            println!("{}", "FAIL".red());
+        match (ecode.success(), self.config.abort_if_error) {
+            (true, _) => { info!("{}", "Compilation SUCCESS".green().bold().underlined()) }
+            (false, false) => { warn!("{}", "Compilation FAIL".yellow().bold().underlined()) }
+            (false, true) => { error!("{}", "Compilation FAIL".red().bold().underlined()) }
         }
 
         self
@@ -219,10 +219,10 @@ impl LaTeX {
         let ecode = command.spawn().unwrap().wait().unwrap();
 
         // TODO: Refactor this later
-        if ecode.success() {
-            println!("{}", "SUCCESS".green());
-        } else {
-            println!("{}", "FAIL".red());
+        match (ecode.success(), self.config.abort_if_error) {
+            (true, _) => { info!("{}", "Compilation SUCCESS".green().bold().underlined()) }
+            (false, false) => { warn!("{}", "Compilation FAIL".yellow().bold().underlined()) }
+            (false, true) => { error!("{}", "Compilation FAIL".red().bold().underlined()) }
         }
 
         &self
@@ -285,10 +285,10 @@ impl LaTeX {
         let ecode = command.spawn().unwrap().wait().unwrap();
 
         // TODO: Refactor this later
-        if ecode.success() {
-            println!("{}", "SUCCESS".green());
-        } else {
-            println!("{}", "FAIL".red());
+        match (ecode.success(), self.config.abort_if_error) {
+            (true, _) => { info!("{}", "Compilation SUCCESS".green().bold().underlined()) }
+            (false, false) => { warn!("{}", "Compilation FAIL".yellow().bold().underlined()) }
+            (false, true) => { error!("{}", "Compilation FAIL".red().bold().underlined()) }
         }
 
         if file == out {
@@ -319,10 +319,9 @@ impl LaTeX {
         let ecode = command.spawn().unwrap().wait().unwrap();
 
         // TODO: Refactor this later
-        if ecode.success() {
-            println!("{}", "SUCCESS".green());
-        } else {
-            println!("{}", "FAIL".red());
+        match ecode.success() {
+            true => { info!("{}", "Diff SUCCESS".green().bold().underlined()) }
+            false => { error!("{}", "Diff FAIL".red().bold().underlined()) }
         }
     }
 }
