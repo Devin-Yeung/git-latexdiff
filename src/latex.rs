@@ -1,4 +1,3 @@
-use crate::Config;
 use crossterm::style::Stylize;
 use std::ffi::OsStr;
 use std::fs;
@@ -12,50 +11,88 @@ use grep::searcher::sinks::UTF8;
 use grep::searcher::{BinaryDetection, SearcherBuilder};
 use walkdir::WalkDir;
 use clap::ValueEnum;
+use crate::config;
 use crate::error::{Error, ErrorKind};
+use crate::error::ErrorKind::MainTeXNotFound;
 
-pub struct LaTeX<'a> {
-    config: &'a Config,
-    project_dir: &'a PathBuf,
-    pub main_tex: PathBuf,
+pub struct LaTeX {
+    pub config: Config,
 }
 
-impl<'a> LaTeX<'a> {
-    pub fn new(
-        config: &'a Config,
-        project_dir: &'a PathBuf,
-        main_tex: Option<&'a PathBuf>,
-    ) -> Result<LaTeX<'a>, Error> {
-        // TODO: if main_tex if not given
-        let main_tex = match main_tex {
-            Some(path) => path.to_owned(),
-            // use main_searcher to find it
-            None => {
-                warn!("Main TeX file is not given");
-                let mut matches = LaTeX::main_searcher(project_dir);
-                match matches.len() {
-                    0 => {
-                        warn!("Searcher can't also guess one");
-                        return Err(Error::new(ErrorKind::MainTeXNotFound));
-                    }
-                    _ => {
-                        let guess = matches.pop().unwrap();
-                        info!("Searcher guess main TeX is {}", &guess.display());
+pub struct Config {
+    pub project_dir: PathBuf,
+    pub main_tex: PathBuf,
+    pub abort_if_error: bool,
+}
 
-                        guess
-                    }
-                }
+pub struct ConfigBuilder {
+    project_dir: PathBuf,
+    main_tex: Option<PathBuf>,
+    abort_if_error: bool,
+}
+
+
+impl Default for ConfigBuilder {
+    fn default() -> Self {
+        ConfigBuilder {
+            project_dir: std::env::current_dir().unwrap(),
+            main_tex: None,
+            abort_if_error: false,
+        }
+    }
+}
+
+impl ConfigBuilder {
+    pub fn new() -> ConfigBuilder {
+        ConfigBuilder::default()
+    }
+
+    pub fn project_dir(mut self, dir: PathBuf) -> Self {
+        self.project_dir = dir;
+        self
+    }
+
+    pub fn main_tex(mut self, file: PathBuf) -> Self {
+        self.main_tex = Some(file);
+        self
+    }
+
+    pub fn abort_if_error(mut self, on: bool) -> Self {
+        self.abort_if_error = on;
+        self
+    }
+
+    fn guess_main_tex(&self) -> std::result::Result<PathBuf, Error> {
+        if self.main_tex.is_some() {
+            return Ok(self.main_tex.clone().unwrap());
+        }
+
+        warn!("Main TeX file is not given");
+        let mut matches = ConfigBuilder::main_searcher(&self.project_dir);
+        return match matches.len() {
+            0 => {
+                warn!("Searcher can't guess the Main TeX file");
+                Err(Error::new(ErrorKind::MainTeXNotFound))
+            }
+            _ => {
+                let guess = matches.pop().unwrap();
+                info!("Searcher guess main TeX is {}", &guess.display());
+                Ok(guess)
             }
         };
+    }
 
-        Ok(LaTeX {
-            config,
-            project_dir,
+    pub fn build(mut self) -> std::result::Result<Config, Error> {
+        let main_tex =  self.guess_main_tex()?;
+        Ok(Config {
+            project_dir: self.project_dir,
             main_tex,
+            abort_if_error: false,
         })
     }
 
-    pub fn main_searcher(path: &PathBuf) -> Vec<PathBuf> {
+
+    fn main_searcher(path: &PathBuf) -> Vec<PathBuf> {
         // See https://github.com/BurntSushi/ripgrep/blob/master/crates/grep/examples/simplegrep.rs
         // See https://docs.rs/grep-searcher/0.1.11/grep_searcher/index.html
         let pattern = r"\\documentclass";
@@ -96,11 +133,18 @@ impl<'a> LaTeX<'a> {
         }
         matches
     }
+}
+
+
+impl LaTeX {
+    pub fn new(config: Config) -> LaTeX {
+        LaTeX { config }
+    }
 
     fn ext_finder(&self, ext: &str) -> Vec<PathBuf> {
         let mut res = Vec::<PathBuf>::new();
 
-        let paths = fs::read_dir(self.project_dir).unwrap();
+        let paths = fs::read_dir(&self.config.project_dir).unwrap();
         for path in paths {
             let path = path.as_ref().unwrap().path();
             if path.extension().unwrap_or_else(|| OsStr::new("")) == ext {
@@ -119,7 +163,7 @@ impl<'a> LaTeX<'a> {
     pub fn pdflatex(&self, file: Option<&PathBuf>) -> &Self {
         let main_tex = match file {
             Some(file) => file,
-            None => &self.main_tex,
+            None => &self.config.main_tex,
         };
 
         info!("Running pdfLaTeX for {}", main_tex.display());
@@ -129,7 +173,7 @@ impl<'a> LaTeX<'a> {
             .arg("-interaction=nonstopmode")
             .stdout(Stdio::null()) // TODO: Maybe pipe to log?
             .stderr(Stdio::null()) // TODO: Maybe pipe to log?
-            .current_dir(self.project_dir); // Run pdflatex in project dir by default
+            .current_dir(&self.config.project_dir); // Run pdflatex in project dir by default
 
         let ecode = command.spawn().unwrap().wait().unwrap();
 
@@ -170,7 +214,7 @@ impl<'a> LaTeX<'a> {
             .arg(&aux)
             .stdout(Stdio::null()) // TODO: Maybe pipe to log?
             .stderr(Stdio::null()) // TODO: Maybe pipe to log?
-            .current_dir(self.project_dir);
+            .current_dir(&self.config.project_dir);
 
         let ecode = command.spawn().unwrap().wait().unwrap();
 
@@ -192,12 +236,12 @@ impl<'a> LaTeX<'a> {
     ) -> &Self {
         let file = match file {
             Some(file) => file,
-            None => &self.main_tex,
+            None => &self.config.main_tex,
         };
 
         let out = match out {
             Some(out) => out,
-            None => &self.main_tex,
+            None => &self.config.main_tex,
         };
 
         let mut real_out = out.to_owned();
@@ -236,7 +280,7 @@ impl<'a> LaTeX<'a> {
             .arg("--expand-bbl")
             .arg(&bbl)
             .current_dir(&file.parent().unwrap()); // The working directory should be set
-                                                   // TODO: bibtex support
+        // TODO: bibtex support
 
         let ecode = command.spawn().unwrap().wait().unwrap();
 
@@ -254,7 +298,7 @@ impl<'a> LaTeX<'a> {
         self
     }
 
-    pub fn diff(config: &Config, old: &PathBuf, new: &PathBuf, out: &PathBuf) {
+    pub fn diff(config: &config::Config, old: &PathBuf, new: &PathBuf, out: &PathBuf) {
         // FIXME: this function need to be refactored
         info!("Diff Source {}", old.display());
         info!("Diff Source {}", new.display());

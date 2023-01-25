@@ -1,5 +1,5 @@
 use crate::git::Git;
-use crate::latex::LaTeX;
+use crate::latex::{ConfigBuilder, LaTeX};
 use crate::{item, Config};
 use crossterm::style::Stylize;
 use git2::{Oid, Repository};
@@ -47,20 +47,28 @@ impl Runner {
         git.checkout_to(new_oid, new_dir.as_path());
 
         info!("{}", "Stage[2/4] Expanding The TeX File".yellow().bold().underlined());
-        let tex = LaTeX::new(&self.config, &old_dir, None)?;
+        let tex = LaTeX::new(
+            ConfigBuilder::new()
+                .project_dir(old_dir.clone())
+                .build()?
+        );
 
 
         tex.pdflatex(None) // Run pdflatex to generate aux file
             .bibtex(None)
             .expand(None, None, None);
-        let old_main_tex = tex.main_tex;
+        let old_main_tex = tex.config.main_tex;
 
-        let tex = LaTeX::new(&self.config, &new_dir, None)?;
+        let tex = LaTeX::new(
+            ConfigBuilder::new()
+                .project_dir(new_dir.clone())
+                .build()?
+        );
 
         tex.pdflatex(None) // Run pdflatex to generate aux file
             .bibtex(None)
             .expand(None, None, None);
-        let new_main_tex = tex.main_tex;
+        let new_main_tex = tex.config.main_tex;
 
         // diff two flatten files
         info!("{}", "Stage[3/4] Differing Two Flattened TeX file".yellow().bold().underlined());
@@ -70,13 +78,19 @@ impl Runner {
 
         // building stage
         info!("{}", "Stage[4/4] Compiling Diff Result TeX file".yellow().bold().underlined());
-        let tex = LaTeX::new(&self.config, &new_dir, Some(&diff_tex))?;
+
+        let tex = LaTeX::new(
+            ConfigBuilder::new()
+                .project_dir(new_dir.clone())
+                .main_tex(diff_tex.clone())
+                .build()?
+        );
 
         tex.pdflatex(None) // Run pdflatex to generate aux file
             .pdflatex(None)
             .pdflatex(None);
 
-        let mut diff_pdf = tex.main_tex;
+        let mut diff_pdf = tex.config.main_tex;
         diff_pdf.set_extension("pdf");
 
         let mut out_pdf = std::env::current_dir().unwrap();
