@@ -10,12 +10,10 @@ use std::io::stdout;
 use std::path::PathBuf;
 use std::process::exit;
 use crate::error::{Error, ErrorKind};
-use crate::logger::{Logger, LogLevel};
 
 pub struct Runner {
     pub config: Config,
     pub repo: Arc<Repository>,
-    pub logger: Logger,
 }
 
 impl Runner {
@@ -26,11 +24,7 @@ impl Runner {
             Err(_) => { return Err(Error::new(ErrorKind::RepoNotFound(config.repo_dir))); }
         };
 
-        // logger write to stdout
-        // TODO: user can specify the log level, info by default
-        let logger = Logger::new(LogLevel::Info, stdout());
-
-        Ok(Runner { config, repo, logger })
+        Ok(Runner { config, repo })
     }
 
     pub fn run(&mut self) -> std::result::Result<(), Error> {
@@ -42,7 +36,7 @@ impl Runner {
         // FIXME: selection can be aborted
 
         // Checking out
-        self.logger.info("Stage[1/4] Checking Out From Git Repo");
+        info!("{}", "Stage[1/4] Checking Out From Git Repo".yellow().bold().underlined());
         let git = Git::new(&self.config, self.repo.as_ref());
         let mut old_dir = self.config.tmp_dir.clone();
         let mut new_dir = self.config.tmp_dir.clone();
@@ -52,8 +46,8 @@ impl Runner {
         git.checkout_to(old_oid, old_dir.as_path());
         git.checkout_to(new_oid, new_dir.as_path());
 
-        self.logger.info("Stage[2/4] Expanding The TeX File");
-        let tex = LaTeX::new(&self.config, &old_dir, &mut self.logger, None)?;
+        info!("{}", "Stage[2/4] Expanding The TeX File".yellow().bold().underlined());
+        let tex = LaTeX::new(&self.config, &old_dir, None)?;
 
 
         tex.pdflatex(None) // Run pdflatex to generate aux file
@@ -61,7 +55,7 @@ impl Runner {
             .expand(None, None, None);
         let old_main_tex = tex.main_tex;
 
-        let tex = LaTeX::new(&self.config, &new_dir, &mut self.logger, None)?;
+        let tex = LaTeX::new(&self.config, &new_dir, None)?;
 
         tex.pdflatex(None) // Run pdflatex to generate aux file
             .bibtex(None)
@@ -69,14 +63,14 @@ impl Runner {
         let new_main_tex = tex.main_tex;
 
         // diff two flatten files
-        self.logger.info("Stage[3/4] Differing Two Flattened TeX file");
+        info!("{}", "Stage[3/4] Differing Two Flattened TeX file".yellow().bold().underlined());
         let mut diff_tex = new_main_tex.clone().parent().unwrap().to_path_buf();
         diff_tex.push("diff.tex");
         LaTeX::diff(&self.config, &old_main_tex, &new_main_tex, &diff_tex);
 
         // building stage
-        self.logger.info("Stage[4/4] Compiling Diff Result TeX file");
-        let tex = LaTeX::new(&self.config, &new_dir, &mut self.logger, Some(&diff_tex))?;
+        info!("{}", "Stage[4/4] Compiling Diff Result TeX file".yellow().bold().underlined());
+        let tex = LaTeX::new(&self.config, &new_dir, Some(&diff_tex))?;
 
         tex.pdflatex(None) // Run pdflatex to generate aux file
             .pdflatex(None)
@@ -148,7 +142,7 @@ impl Runner {
         // logging
         match err {
             Ok(_) => {}
-            Err(e) => { self.logger.error(&e.to_string()); }
+            Err(e) => { error!("{}", e); }
         }
         // check dangerous operation
         let root = PathBuf::from("/");

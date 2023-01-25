@@ -13,12 +13,10 @@ use grep::searcher::{BinaryDetection, SearcherBuilder};
 use walkdir::WalkDir;
 use clap::ValueEnum;
 use crate::error::{Error, ErrorKind};
-use crate::logger::Logger;
 
 pub struct LaTeX<'a> {
     config: &'a Config,
     project_dir: &'a PathBuf,
-    logger: &'a Logger,
     pub main_tex: PathBuf,
 }
 
@@ -26,7 +24,6 @@ impl<'a> LaTeX<'a> {
     pub fn new(
         config: &'a Config,
         project_dir: &'a PathBuf,
-        logger: &'a Logger,
         main_tex: Option<&'a PathBuf>,
     ) -> Result<LaTeX<'a>, Error> {
         // TODO: if main_tex if not given
@@ -34,18 +31,16 @@ impl<'a> LaTeX<'a> {
             Some(path) => path.to_owned(),
             // use main_searcher to find it
             None => {
-                logger.warning("Main TeX file is not given.");
+                warn!("Main TeX file is not given");
                 let mut matches = LaTeX::main_searcher(project_dir);
                 match matches.len() {
                     0 => {
-                        logger.warning("Searcher can't also guess one");
+                        warn!("Searcher can't also guess one");
                         return Err(Error::new(ErrorKind::MainTeXNotFound));
                     }
                     _ => {
                         let guess = matches.pop().unwrap();
-                        logger.info(
-                            format!("Searcher guess main TeX is {}", &guess.display()).as_ref()
-                        );
+                        info!("Searcher guess main TeX is {}", &guess.display());
 
                         guess
                     }
@@ -56,7 +51,6 @@ impl<'a> LaTeX<'a> {
         Ok(LaTeX {
             config,
             project_dir,
-            logger,
             main_tex,
         })
     }
@@ -111,12 +105,12 @@ impl<'a> LaTeX<'a> {
             let path = path.as_ref().unwrap().path();
             if path.extension().unwrap_or_else(|| OsStr::new("")) == ext {
                 // TODO: Enable me in verbose mode
-                self.logger.info(format!("Found .{}: {}", ext, path.display()).as_ref());
+                info!("Found .{}: {}", ext, path.display());
                 res.push(path);
             }
         }
         if res.is_empty() {
-            self.logger.info(format!(".{} Not Found!", ext).as_ref());
+            info!(".{} Not Found!", ext);
         }
         return res;
     }
@@ -128,7 +122,7 @@ impl<'a> LaTeX<'a> {
             None => &self.main_tex,
         };
 
-        self.logger.info(format!("Running pdfLaTeX for {} ...", main_tex.display()).as_ref());
+        info!("Running pdfLaTeX for {}", main_tex.display());
         let mut command = Command::new("pdflatex"); // FIXME: specify pdflatex path
         command
             .arg(main_tex)
@@ -168,7 +162,7 @@ impl<'a> LaTeX<'a> {
             }
         };
 
-        self.logger.info(format!("Running bibtex for {} ...", aux.display()).as_ref());
+        info!("Running bibtex for {}", aux.display());
 
         let mut command = Command::new("bibtex"); // FIXME: specify bibtex path
 
@@ -230,8 +224,8 @@ impl<'a> LaTeX<'a> {
             }
         };
 
-        self.logger.info(format!("Expanding Source: {}", &file.display()).as_ref());
-        self.logger.info(format!("Expanding Target: {}", &out.display()).as_ref());
+        info!("Expanding Source: {}", &file.display());
+        info!("Expanding Target: {}", &out.display());
 
         let mut command = Command::new("latexpand"); // FIXME: specify latexpand path
 
@@ -262,16 +256,9 @@ impl<'a> LaTeX<'a> {
 
     pub fn diff(config: &Config, old: &PathBuf, new: &PathBuf, out: &PathBuf) {
         // FIXME: this function need to be refactored
-        print!(
-            "{}",
-            format!(
-                "Compare {}\nAnd     {}\nTo ===> {}...",
-                old.display(),
-                new.display(),
-                out.display()
-            )
-            .yellow()
-        );
+        info!("Diff Source {}", old.display());
+        info!("Diff Source {}", new.display());
+        info!("Diff Output {}", out.display());
         // pipe to a standalone file
         let diff_result = File::create(out).unwrap();
         let stdio = Stdio::from(diff_result);

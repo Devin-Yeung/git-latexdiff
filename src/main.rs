@@ -16,7 +16,28 @@ use crate::config::Config;
 use crate::logger::Logger;
 use crate::runner::Runner;
 
+#[macro_use]
+extern crate log;
+extern crate simplelog;
+
+use simplelog::*;
+
 fn main() {
+    // Init the global logger
+    CombinedLogger::init(
+        vec![
+            TermLogger::new(LevelFilter::Debug,
+                            simplelog::ConfigBuilder::default()
+                                .add_filter_allow_str("git_latexdiff")
+                                .set_target_level(LevelFilter::Off)
+                                .set_thread_level(LevelFilter::Off)
+                                .set_time_level(LevelFilter::Off)
+                                .set_level_padding(LevelPadding::Right)
+                                .build(),
+                            TerminalMode::Mixed,
+                            ColorChoice::Auto),
+        ]
+    ).unwrap();
 
     let args: args::Args = args::Args::parse();
     if args.debug {
