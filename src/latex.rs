@@ -178,6 +178,9 @@ impl LaTeX {
             .stderr(Stdio::null()) // TODO: Maybe pipe to log?
             .current_dir(&self.config.project_dir); // Run pdflatex in project dir by default
 
+        debug!("CommandLineArgs: {:?}", command);
+        debug!("WorkDir: {}", self.config.project_dir.display());
+
         let ecode = command.spawn().unwrap().wait().unwrap();
 
         // TODO: Refactor this later
@@ -224,6 +227,9 @@ impl LaTeX {
             .stdout(Stdio::null()) // TODO: Maybe pipe to log?
             .stderr(Stdio::null()) // TODO: Maybe pipe to log?
             .current_dir(&self.config.project_dir);
+
+        debug!("CommandLineArgs: {:?}", command);
+        debug!("WorkDir: {}", self.config.project_dir.display());
 
         let ecode = command.spawn().unwrap().wait().unwrap();
 
@@ -294,7 +300,9 @@ impl LaTeX {
             .arg("--expand-bbl")
             .arg(&bbl)
             .current_dir(&file.parent().unwrap()); // The working directory should be set
-        // TODO: bibtex support
+
+        debug!("CommandLineArgs: {:?}", command);
+        debug!("WorkDir: {}", self.config.project_dir.display());
 
         let ecode = command.spawn().unwrap().wait().unwrap();
 
@@ -332,6 +340,8 @@ impl LaTeX {
             // .arg("--flatten") // FIXME: Sometimes Strange, So remove this args
             .stderr(Stdio::null()) // TODO: Maybe pipe to log?
             .stdout(stdio);
+
+        debug!("CommandLineArgs: {:?}", command);
 
         let ecode = command.spawn().unwrap().wait().unwrap();
 
