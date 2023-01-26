@@ -54,9 +54,9 @@ impl Runner {
         );
 
 
-        tex.pdflatex(None) // Run pdflatex to generate aux file
-            .bibtex(None)
-            .expand(None, None, None);
+        tex.pdflatex(None)? // Run pdflatex to generate aux file
+            .bibtex(None)?
+            .expand(None, None, None)?;
         let old_main_tex = tex.config.main_tex;
 
         let tex = LaTeX::new(
@@ -65,9 +65,9 @@ impl Runner {
                 .build()?
         );
 
-        tex.pdflatex(None) // Run pdflatex to generate aux file
-            .bibtex(None)
-            .expand(None, None, None);
+        tex.pdflatex(None)?// Run pdflatex to generate aux file
+            .bibtex(None)?
+            .expand(None, None, None)?;
         let new_main_tex = tex.config.main_tex;
 
         // diff two flatten files
@@ -86,9 +86,9 @@ impl Runner {
                 .build()?
         );
 
-        tex.pdflatex(None) // Run pdflatex to generate aux file
-            .pdflatex(None)
-            .pdflatex(None);
+        tex.pdflatex(None)? // Run pdflatex to generate aux file
+            .pdflatex(None)?
+            .pdflatex(None)?;
 
         let mut diff_pdf = tex.config.main_tex;
         diff_pdf.set_extension("pdf");

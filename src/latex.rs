@@ -87,7 +87,7 @@ impl ConfigBuilder {
         Ok(Config {
             project_dir: self.project_dir,
             main_tex,
-            abort_if_error: false,
+            abort_if_error: self.abort_if_error,
         })
     }
 
@@ -160,7 +160,7 @@ impl LaTeX {
     }
 
     /// pass in main tex as `file`
-    pub fn pdflatex(&self, file: Option<&PathBuf>) -> &Self {
+    pub fn pdflatex(&self, file: Option<&PathBuf>) -> std::result::Result<&Self, Error> {
         let main_tex = match file {
             Some(file) => file,
             None => &self.config.main_tex,
@@ -181,19 +181,25 @@ impl LaTeX {
         match (ecode.success(), self.config.abort_if_error) {
             (true, _) => { info!("{}", "Compilation SUCCESS".green().bold().underlined()) }
             (false, false) => { warn!("{}", "Compilation FAIL".yellow().bold().underlined()) }
-            (false, true) => { error!("{}", "Compilation FAIL".red().bold().underlined()) }
+            (false, true) => {
+                error!("{}", "Compilation FAIL".red().bold().underlined());
+                return Err(Error::new(ErrorKind::CompileError(String::from("pdflatex"))));
+            }
         }
 
-        self
+        Ok(self)
     }
 
-    pub fn bibtex(&self, file: Option<&PathBuf>) -> &Self {
+    pub fn bibtex(&self, file: Option<&PathBuf>) -> std::result::Result<&Self, Error> {
         let aux = match file {
             // if aux is not given, find in the project dir
             None => {
                 let aux = self.ext_finder("aux").pop();
                 if aux.is_none() {
-                    return &self;
+                    return match self.config.abort_if_error {
+                        true => Err(Error::new(ErrorKind::CompileError(String::from("bibtex")))), // TODO: Maybe add a new error kind
+                        false => Ok(&self)
+                    };
                 }
                 let mut aux = aux.unwrap();
                 aux.set_extension("");
@@ -222,10 +228,13 @@ impl LaTeX {
         match (ecode.success(), self.config.abort_if_error) {
             (true, _) => { info!("{}", "Compilation SUCCESS".green().bold().underlined()) }
             (false, false) => { warn!("{}", "Compilation FAIL".yellow().bold().underlined()) }
-            (false, true) => { error!("{}", "Compilation FAIL".red().bold().underlined()) }
+            (false, true) => {
+                error!("{}", "Compilation FAIL".red().bold().underlined());
+                return Err(Error::new(ErrorKind::CompileError(String::from("bibtex"))));
+            }
         }
 
-        &self
+        Ok(&self)
     }
 
     pub fn expand(
@@ -233,7 +242,7 @@ impl LaTeX {
         file: Option<&PathBuf>,
         out: Option<&PathBuf>,
         bbl: Option<&PathBuf>,
-    ) -> &Self {
+    ) -> Result<&Self, Error> {
         let file = match file {
             Some(file) => file,
             None => &self.config.main_tex,
@@ -261,10 +270,12 @@ impl LaTeX {
             None => {
                 let bbl = self.ext_finder("bbl").pop();
                 if bbl.is_none() {
-                    return &self;
-                } else {
-                    bbl.unwrap()
+                    return match self.config.abort_if_error {
+                        true => Err(Error::new(ErrorKind::CompileError(String::from("latexpand")))), // TODO: Maybe add a new error kind
+                        false => Ok(&self)
+                    };
                 }
+                bbl.unwrap()
             }
         };
 
@@ -288,14 +299,17 @@ impl LaTeX {
         match (ecode.success(), self.config.abort_if_error) {
             (true, _) => { info!("{}", "Compilation SUCCESS".green().bold().underlined()) }
             (false, false) => { warn!("{}", "Compilation FAIL".yellow().bold().underlined()) }
-            (false, true) => { error!("{}", "Compilation FAIL".red().bold().underlined()) }
+            (false, true) => {
+                error!("{}", "Compilation FAIL".red().bold().underlined());
+                return Err(Error::new(ErrorKind::CompileError(String::from("latexpand"))));
+            }
         }
 
         if file == out {
             fs::rename(real_out, out).unwrap();
         }
 
-        self
+        Ok(self)
     }
 
     pub fn diff(config: &config::Config, old: &PathBuf, new: &PathBuf, out: &PathBuf) {
