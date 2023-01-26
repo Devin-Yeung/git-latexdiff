@@ -169,8 +169,11 @@ impl LaTeX {
         info!("Running pdfLaTeX for {}", main_tex.display());
         let mut command = Command::new("pdflatex"); // FIXME: specify pdflatex path
         command
-            .arg(main_tex)
-            .arg("-interaction=nonstopmode")
+            .arg("-interaction")
+            .arg("nonstopmode")
+            .arg("-output-directory") // explicitly specify the output directory
+            .arg(&self.config.project_dir.as_os_str())
+            .arg(main_tex) // main_tex comes the last, the position of args matters on some LaTeX distributions
             .stdout(Stdio::null()) // TODO: Maybe pipe to log?
             .stderr(Stdio::null()) // TODO: Maybe pipe to log?
             .current_dir(&self.config.project_dir); // Run pdflatex in project dir by default
