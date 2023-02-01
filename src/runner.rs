@@ -31,8 +31,16 @@ impl Runner {
         self.prepare();
         println!("{}", "Please Choose the old version".green());
         let old_oid = self.select_oid();
-        println!("{}", "Please Choose the new version".green());
-        let new_oid = self.select_oid();
+        let new_oid:Option<Oid> = match self.config.cmp2index {
+            true => {
+                println!("{}", "Repo's Index is chosen as the new version".green());
+                None
+            }
+            false => {
+                println!("{}", "Please Choose the new version".green());
+                Some(self.select_oid())
+            }
+        };
         // FIXME: selection can be aborted
 
         // Checking out
@@ -44,7 +52,10 @@ impl Runner {
         new_dir.push("new");
 
         git.checkout_to(old_oid, old_dir.as_path());
-        git.checkout_to(new_oid, new_dir.as_path());
+        match self.config.cmp2index {
+            true => git.checkout_index_to(new_dir.as_path()),
+            false => git.checkout_to(new_oid.unwrap(), new_dir.as_path()),
+        }
 
         info!("{}", "Stage[2/4] Expanding The TeX File".yellow().bold().underlined());
         let tex = LaTeX::new(
@@ -130,6 +141,7 @@ impl Runner {
 
         let out = Skim::run_with(&self.config.skim_opts, Some(rx)).unwrap();
 
+        // TODO: return a error instead of aborting
         if out.is_abort {
             self.abort(Err(Error::new(ErrorKind::SkimAbort)));
         }

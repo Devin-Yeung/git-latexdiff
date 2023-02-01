@@ -21,6 +21,7 @@ pub struct Config {
     pub verbose: bool,
     pub debug: bool,
     pub no_clean: bool,
+    pub cmp2index: bool,
     #[derivative(Debug = "ignore")]
     pub skim_opts: SkimOptions<'static>,
 }
@@ -36,6 +37,7 @@ impl From<Args> for Config {
             .verbose(value.verbose)
             .debug(value.debug)
             .no_clean(value.no_clean)
+            .cmp2index(value.cmp2index)
             .build()
     }
 }
@@ -54,6 +56,7 @@ pub struct ConfigBuilder {
     output: Option<PathBuf>,
     verbose: bool,
     no_clean: bool,
+    cmp2index: bool,
     skim_opts: Option<SkimOptions<'static>>,
     debug: bool,
 }
@@ -69,6 +72,7 @@ impl ConfigBuilder {
             verbose: false,
             debug: false,
             no_clean: false,
+            cmp2index: false,
             skim_opts: None,
         }
     }
@@ -142,6 +146,11 @@ impl ConfigBuilder {
         self
     }
 
+    pub fn cmp2index(mut self, on: bool) -> Self {
+        self.cmp2index = on;
+        self
+    }
+
     pub fn output(mut self, path: Option<PathBuf>) -> Self {
         let mut path = match path {
             Some(path) => path,
@@ -190,6 +199,7 @@ impl ConfigBuilder {
             verbose: self.verbose,
             debug: self.debug,
             no_clean: self.no_clean,
+            cmp2index: self.cmp2index,
             skim_opts: self.skim_opts.unwrap(),
         }
     }

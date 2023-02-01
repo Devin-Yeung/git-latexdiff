@@ -12,4 +12,4 @@ a new arg `--use-fzf` will also be added
 (`zoxide` impl a fzf wrapper, maybe can get some ideas from its impl)
 - Use regex to match the compile error message,
 See [LaTeX-Workshop's impl](https://github.com/James-Yu/LaTeX-Workshop/blob/f65d9e4e437a1fe206842f0ae9245e3181b11ad8/src/components/parser/latexlog.ts)
-- Current worktree can be compared
+- Current index can be compared

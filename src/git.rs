@@ -28,4 +28,19 @@ impl<'a> Git<'a> {
                 .update_index(false) // <= prevent making index messy
         )).unwrap();
     }
+
+    pub fn checkout_index_to<P>(&self, target_dir: P)
+        where P: AsRef<Path>
+    {
+        // TODO: Error Handling
+        self.repo.checkout_index(
+            None,
+            Some(
+                CheckoutBuilder::new()
+                    .target_dir(target_dir.as_ref())
+                    .recreate_missing(true)
+                    .update_index(false) // <= prevent making index messy
+            ),
+        ).unwrap();
+    }
 }

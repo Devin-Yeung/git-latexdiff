@@ -33,6 +33,10 @@ pub struct Args {
     /// Do not clean the intermediate files.
     #[clap(long, action = clap::ArgAction::SetTrue, default_value = "false")]
     pub no_clean: bool,
+    /// Set repo's index(Staging Area) as newer version.
+    /// If enabled, you are only required to provide the commit id of old version
+    #[clap(long, action = clap::ArgAction::SetTrue, default_value = "false")]
+    pub cmp2index: bool,
     /// Specify the path of latexdiff executable
     #[clap(long, value_parser, required(false))]
     pub latexdiff_path: Option<PathBuf>,
