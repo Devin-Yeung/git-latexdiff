@@ -13,7 +13,6 @@ use clap::Parser;
 extern crate skim;
 
 use crate::config::Config;
-use crate::logger::Logger;
 use crate::runner::Runner;
 
 #[macro_use]
@@ -23,10 +22,13 @@ extern crate simplelog;
 use simplelog::*;
 
 fn main() {
+
+    let args: args::Args = args::Args::parse();
+
     // Init the global logger
     CombinedLogger::init(
         vec![
-            TermLogger::new(LevelFilter::Debug,
+            TermLogger::new(args.log_level.clone().to_level_filter(),
                             simplelog::ConfigBuilder::default()
                                 .add_filter_allow_str("git_latexdiff")
                                 .set_target_level(LevelFilter::Off)
@@ -39,9 +41,9 @@ fn main() {
         ]
     ).unwrap();
 
-    let args: args::Args = args::Args::parse();
     if args.debug {
         println!("{:#?}", args);
+        println!("{:?}", args.log_level)
     }
 
     let config = Config::from(args);

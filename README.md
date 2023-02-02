@@ -2,7 +2,7 @@
 
 - Add `--no-capture` args, which indicate that the log of pdflatex
 will be shown on `stdout`
-- Add `--log-level` args
+- ~~Add `--log-level` args~~
 - Add `--abort-if-error` args, which indicate that the program will abort
 if errors in the compilation stage
 - Allow user to pass in extra args to `latexdiff`, `pdflatex` ...

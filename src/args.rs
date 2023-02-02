@@ -2,6 +2,7 @@ use clap::Parser;
 use std::path::PathBuf;
 use crate::latex;
 use latex::Engine;
+use crate::logger;
 
 #[derive(Parser, Clone, Debug)]
 // #[clap(infer_subcommands(true))]
@@ -37,6 +38,9 @@ pub struct Args {
     /// If enabled, you are only required to provide the commit id of old version
     #[clap(long, action = clap::ArgAction::SetTrue, default_value = "false")]
     pub cmp2index: bool,
+    /// Specify the log level
+    #[clap(long, value_enum, required(false), default_value = "info")]
+    pub log_level: logger::LogLevel,
     /// Specify the path of latexdiff executable
     #[clap(long, value_parser, required(false))]
     pub latexdiff_path: Option<PathBuf>,
