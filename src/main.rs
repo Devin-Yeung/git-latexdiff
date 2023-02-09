@@ -13,9 +13,6 @@ use clap::Parser;
 #[cfg(not(windows))]
 mod item;
 
-#[cfg(not(windows))]
-extern crate skim;
-
 use crate::config::Config;
 use crate::runner::Runner;
 

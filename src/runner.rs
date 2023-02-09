@@ -9,7 +9,7 @@ use std::path::PathBuf;
 use std::process::exit;
 use std::sync::Arc;
 use crate::error::{Error, ErrorKind};
-use crate::selector::select_oid;
+use crate::selector::SelectorBuilder;
 
 pub struct Runner {
     pub config: Config,
@@ -30,15 +30,26 @@ impl Runner {
     pub fn run(&mut self) -> std::result::Result<(), Error> {
         self.prepare();
         println!("{}", "Please Choose the old version".green());
-        let old_oid = select_oid(self)?;
-        let new_oid:Option<Oid> = match self.config.cmp2index {
+        let selector = {
+            #[cfg(not(windows))]
+            {
+                SelectorBuilder::default().repo(self.repo.clone()).build()
+            }
+            #[cfg(windows)]
+            {
+                SelectorBuilder::default().build()
+            }
+        };
+
+        let old_oid = selector.select()?;
+        let new_oid: Option<Oid> = match self.config.cmp2index {
             true => {
                 println!("{}", "Repo's Index is chosen as the new version".green());
                 None
             }
             false => {
                 println!("{}", "Please Choose the new version".green());
-                Some(select_oid(self)?)
+                Some(selector.select()?)
             }
         };
         // FIXME: selection can be aborted

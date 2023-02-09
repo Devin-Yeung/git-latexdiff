@@ -8,9 +8,6 @@ use std::path::PathBuf;
 use derivative::Derivative;
 use crate::error::{Error, ErrorKind};
 
-#[cfg(not(windows))]
-use skim::prelude::*;
-
 #[derive(Derivative)]
 #[derivative(Debug)]
 pub struct Config {
@@ -24,9 +21,6 @@ pub struct Config {
     pub debug: bool,
     pub no_clean: bool,
     pub cmp2index: bool,
-    #[derivative(Debug = "ignore")]
-    #[cfg(not(windows))]
-    pub skim_opts: SkimOptions<'static>,
 }
 
 impl From<Args> for Config {
@@ -61,8 +55,6 @@ pub struct ConfigBuilder {
     no_clean: bool,
     cmp2index: bool,
     debug: bool,
-    #[cfg(not(windows))]
-    skim_opts: Option<SkimOptions<'static>>,
 }
 
 impl ConfigBuilder {
@@ -77,8 +69,6 @@ impl ConfigBuilder {
             debug: false,
             no_clean: false,
             cmp2index: false,
-            #[cfg(not(windows))]
-            skim_opts: None,
         }
     }
 
@@ -175,27 +165,6 @@ impl ConfigBuilder {
         self
     }
 
-    #[cfg(not(windows))]
-    fn skim_default_options() -> SkimOptions<'static> {
-        SkimOptionsBuilder::default()
-            .reverse(true)
-            .multi(false)
-            .preview(Some("")) // preview should be specified to enable preview window
-            // .height(Some("50%")) // FIXME: if height is not 100%. it will be buggy
-            // See https://github.com/lotabout/skim/issues/494
-            .build()
-            .unwrap()
-    }
-
-    #[cfg(not(windows))]
-    pub fn skim_opts(mut self, opts: Option<SkimOptions<'static>>) -> Self {
-        self.skim_opts = match opts {
-            Some(_) => opts,
-            None => Some(ConfigBuilder::skim_default_options()),
-        };
-        self
-    }
-
     pub fn build(self) -> Config {
         Config {
             repo_dir: self.repo_dir.unwrap(),
@@ -207,8 +176,6 @@ impl ConfigBuilder {
             debug: self.debug,
             no_clean: self.no_clean,
             cmp2index: self.cmp2index,
-            #[cfg(not(windows))]
-            skim_opts: self.skim_opts.unwrap(),
         }
     }
 }
@@ -224,11 +191,6 @@ impl Default for ConfigBuilder {
             .verbose(false)
             .no_clean(false)
             .debug(false);
-
-        #[cfg(not(windows))]
-        {
-            builder = builder.skim_opts(None);
-        }
 
         builder
     }
