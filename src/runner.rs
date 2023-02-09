@@ -1,15 +1,15 @@
 use crate::git::Git;
 use crate::latex::{ConfigBuilder, LaTeX};
-use crate::{item, Config};
+use crate::Config;
 use crossterm::style::Stylize;
 use git2::{Oid, Repository};
-use item::Item;
-use skim::prelude::*;
 use std::fs;
 use std::io::stdout;
 use std::path::PathBuf;
 use std::process::exit;
+use std::sync::Arc;
 use crate::error::{Error, ErrorKind};
+use crate::selector::select_oid;
 
 pub struct Runner {
     pub config: Config,
@@ -30,7 +30,7 @@ impl Runner {
     pub fn run(&mut self) -> std::result::Result<(), Error> {
         self.prepare();
         println!("{}", "Please Choose the old version".green());
-        let old_oid = self.select_oid();
+        let old_oid = select_oid(self)?;
         let new_oid:Option<Oid> = match self.config.cmp2index {
             true => {
                 println!("{}", "Repo's Index is chosen as the new version".green());
@@ -38,7 +38,7 @@ impl Runner {
             }
             false => {
                 println!("{}", "Please Choose the new version".green());
-                Some(self.select_oid())
+                Some(select_oid(self)?)
             }
         };
         // FIXME: selection can be aborted
@@ -120,48 +120,6 @@ impl Runner {
 
         tmp_dir.push("new");
         fs::create_dir_all(tmp_dir.as_path()).expect("TODO: panic message");
-    }
-
-    pub fn select_oid(&mut self) -> Oid {
-        // Init Channel
-        let (tx, rx): (SkimItemSender, SkimItemReceiver) = unbounded();
-
-        // Get Commits Walker, from HEAD by default
-        let mut walk = self.repo.revwalk().unwrap();
-        walk.push_head().unwrap();
-
-        for oid in walk {
-            let _ = tx.send(Arc::from(Item {
-                repo: self.repo.clone(),
-                oid: oid.unwrap(),
-            }));
-        }
-
-        drop(tx); // Notify Skim
-
-        let out = Skim::run_with(&self.config.skim_opts, Some(rx)).unwrap();
-
-        // TODO: return a error instead of aborting
-        if out.is_abort {
-            self.abort(Err(Error::new(ErrorKind::SkimAbort)));
-        }
-
-        let mut selected_item = out.selected_items;
-
-        // TODO: Error Handling
-        if selected_item.len() > 1 {
-            println!("{}", "More than one items are selected".red());
-            unreachable!();
-        } else if selected_item.len() <= 0 {
-            println!("{}", "No item is selected".red());
-            unreachable!();
-        }
-
-        let item = selected_item.pop().unwrap();
-        println!("{}", item.output().green());
-        let item = (*item).as_any().downcast_ref::<Item>().unwrap();
-
-        return item.oid;
     }
 
     pub fn abort(&mut self, err: std::result::Result<(), Error>) -> ! {

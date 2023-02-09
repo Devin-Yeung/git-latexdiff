@@ -2,12 +2,14 @@ use crate::args;
 use args::Args;
 use chrono::prelude::*;
 
-use skim::prelude::*;
 use std::fs;
 use std::path::PathBuf;
 
 use derivative::Derivative;
 use crate::error::{Error, ErrorKind};
+
+#[cfg(not(windows))]
+use skim::prelude::*;
 
 #[derive(Derivative)]
 #[derivative(Debug)]
@@ -23,6 +25,7 @@ pub struct Config {
     pub no_clean: bool,
     pub cmp2index: bool,
     #[derivative(Debug = "ignore")]
+    #[cfg(not(windows))]
     pub skim_opts: SkimOptions<'static>,
 }
 
@@ -57,8 +60,9 @@ pub struct ConfigBuilder {
     verbose: bool,
     no_clean: bool,
     cmp2index: bool,
-    skim_opts: Option<SkimOptions<'static>>,
     debug: bool,
+    #[cfg(not(windows))]
+    skim_opts: Option<SkimOptions<'static>>,
 }
 
 impl ConfigBuilder {
@@ -73,6 +77,7 @@ impl ConfigBuilder {
             debug: false,
             no_clean: false,
             cmp2index: false,
+            #[cfg(not(windows))]
             skim_opts: None,
         }
     }
@@ -170,6 +175,7 @@ impl ConfigBuilder {
         self
     }
 
+    #[cfg(not(windows))]
     fn skim_default_options() -> SkimOptions<'static> {
         SkimOptionsBuilder::default()
             .reverse(true)
@@ -181,6 +187,7 @@ impl ConfigBuilder {
             .unwrap()
     }
 
+    #[cfg(not(windows))]
     pub fn skim_opts(mut self, opts: Option<SkimOptions<'static>>) -> Self {
         self.skim_opts = match opts {
             Some(_) => opts,
@@ -200,6 +207,7 @@ impl ConfigBuilder {
             debug: self.debug,
             no_clean: self.no_clean,
             cmp2index: self.cmp2index,
+            #[cfg(not(windows))]
             skim_opts: self.skim_opts.unwrap(),
         }
     }
@@ -207,15 +215,21 @@ impl ConfigBuilder {
 
 impl Default for ConfigBuilder {
     fn default() -> Self {
-        ConfigBuilder::new()
+        let mut builder = ConfigBuilder::new()
             .repo_dir(None)
             .tmp_dir(None)
             .latexdiff_path(None)
             .main_tex(None)
             .output(None)
-            .skim_opts(None)
             .verbose(false)
             .no_clean(false)
-            .debug(false)
+            .debug(false);
+
+        #[cfg(not(windows))]
+        {
+            builder = builder.skim_opts(None);
+        }
+
+        builder
     }
 }

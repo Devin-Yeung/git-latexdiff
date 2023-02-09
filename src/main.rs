@@ -1,15 +1,19 @@
 mod args;
 mod config;
 mod git;
-mod item;
 mod latex;
 mod runner;
 mod util;
 mod error;
 mod logger;
+mod selector;
 
 use clap::Parser;
 
+#[cfg(not(windows))]
+mod item;
+
+#[cfg(not(windows))]
 extern crate skim;
 
 use crate::config::Config;
@@ -22,7 +26,6 @@ extern crate simplelog;
 use simplelog::*;
 
 fn main() {
-
     let args: args::Args = args::Args::parse();
 
     // Init the global logger

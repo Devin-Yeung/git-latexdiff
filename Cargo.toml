@@ -8,14 +8,16 @@ edition = "2021"
 [dependencies]
 # We don't need ssh in this project, so we remove it from dependencies
 # See: https://github.com/rust-lang/git2-rs/issues/812
-git2 = { version = '0.16', default_features = false, features = [ "vendored-openssl", "vendored-libgit2" ]}
+git2 = { version = '0.16', default_features = false, features = ["vendored-openssl", "vendored-libgit2"] }
 which = "4.3.0"
 crossterm = "0.25.0"
-clap = { version='4', features = ['derive']}
-skim = "0.10.2"
+clap = { version = '4', features = ['derive'] }
 chrono = "0.4"
 grep = "0.2"
 walkdir = "2"
 derivative = "2.2.0"
 log = "0.4.0"
 simplelog = "0.12.0"
+
+[target.'cfg(not(windows))'.dependencies]
+skim = "0.10.2"
