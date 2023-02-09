@@ -41,6 +41,8 @@ pub enum ErrorKind {
     /// For example, interactive mode is not support on windows target
     /// since skim does not support windows
     NotSupportedDevice,
+    /// The commit hash given by user if invalid
+    InvalidCommitHash,
     /// Hints that destructuring should not be exhaustive.
     ///
     /// This enum may grow additional variants, so this makes sure clients
@@ -59,6 +61,7 @@ impl error::Error for Error {
             ErrorKind::RepoNotFound(_) => "Repository not given and not found in $PWD",
             ErrorKind::MainTeXNotFound => "Main TeX not given and can not be inferred",
             ErrorKind::NotSupportedDevice => "Not supported device",
+            ErrorKind::InvalidCommitHash => "Invalid commit hash",
             ErrorKind::__NonExhaustive => unreachable!(),
         }
     }
@@ -85,6 +88,9 @@ impl fmt::Display for Error {
             ErrorKind::NotSupportedDevice => {
                 write!(f, "Not supported device")
             }
+            ErrorKind::InvalidCommitHash => {
+                write!(f, "Invalid commit hash")
+            },
             ErrorKind::__NonExhaustive => unreachable!(),
         }
     }

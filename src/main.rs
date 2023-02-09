@@ -7,6 +7,7 @@ mod util;
 mod error;
 mod logger;
 mod selector;
+mod wrapper;
 
 use clap::Parser;
 

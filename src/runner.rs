@@ -10,6 +10,7 @@ use std::process::exit;
 use std::sync::Arc;
 use crate::error::{Error, ErrorKind};
 use crate::selector::SelectorBuilder;
+use crate::wrapper::CommitWrapper;
 
 pub struct Runner {
     pub config: Config,
@@ -27,9 +28,8 @@ impl Runner {
         Ok(Runner { config, repo })
     }
 
-    pub fn run(&mut self) -> std::result::Result<(), Error> {
-        self.prepare();
-        println!("{}", "Please Choose the old version".green());
+    fn select(&self) -> std::result::Result<(CommitWrapper, CommitWrapper), Error>
+    {
         let selector = {
             #[cfg(not(windows))]
             {
@@ -41,19 +41,23 @@ impl Runner {
             }
         };
 
-        let old_oid = selector.select()?;
-        let new_oid: Option<Oid> = match self.config.cmp2index {
-            true => {
-                println!("{}", "Repo's Index is chosen as the new version".green());
-                None
-            }
-            false => {
-                println!("{}", "Please Choose the new version".green());
-                Some(selector.select()?)
-            }
+        let old_ver = match &self.config.old {
+            None => { CommitWrapper::Commit(selector.select()?) }
+            Some(x) => { CommitWrapper::parse(&self.repo, x)? }
         };
-        // FIXME: selection can be aborted
 
+        let new_ver = match &self.config.new {
+            None => { CommitWrapper::Commit(selector.select()?) }
+            Some(x) => { CommitWrapper::parse(&self.repo, x)? }
+        };
+
+        Ok((old_ver, new_ver))
+    }
+
+    pub fn run(&mut self) -> std::result::Result<(), Error> {
+        self.prepare();
+        // Select
+        let (old_ver, new_ver) = self.select()?;
         // Checking out
         info!("{}", "Stage[1/4] Checking Out From Git Repo".yellow().bold().underlined());
         let git = Git::new(&self.config, self.repo.as_ref());
@@ -62,11 +66,8 @@ impl Runner {
         old_dir.push("old");
         new_dir.push("new");
 
-        git.checkout_to(old_oid, old_dir.as_path());
-        match self.config.cmp2index {
-            true => git.checkout_index_to(new_dir.as_path()),
-            false => git.checkout_to(new_oid.unwrap(), new_dir.as_path()),
-        }
+        git.checkout_to(old_ver, old_dir.as_path());
+        git.checkout_to(new_ver, new_dir.as_path());
 
         info!("{}", "Stage[2/4] Expanding The TeX File".yellow().bold().underlined());
         let tex = LaTeX::new(

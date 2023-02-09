@@ -13,14 +13,17 @@ use crate::error::{Error, ErrorKind};
 pub struct Config {
     pub repo_dir: PathBuf,
     pub tmp_dir: PathBuf,
-    pub main_tex: Option<PathBuf>,
-    // FIXME: main tex in different version may differ, fix this
     pub latexdiff_path: PathBuf,
     pub output: PathBuf,
+    // FIXME: main tex in different version may differ, fix this
+    pub main_tex: Option<PathBuf>,
+    pub new: Option<String>,
+    pub old: Option<String>,
     pub verbose: bool,
     pub debug: bool,
     pub no_clean: bool,
     pub cmp2index: bool,
+    pub interactive: bool,
 }
 
 impl From<Args> for Config {
@@ -35,6 +38,9 @@ impl From<Args> for Config {
             .debug(value.debug)
             .no_clean(value.no_clean)
             .cmp2index(value.cmp2index)
+            .interactive(value.interactive)
+            .new_hash(value.new)
+            .old_hash(value.old)
             .build()
     }
 }
@@ -51,9 +57,12 @@ pub struct ConfigBuilder {
     latexdiff_path: Option<PathBuf>,
     main_tex: Option<PathBuf>,
     output: Option<PathBuf>,
+    new: Option<String>,
+    old: Option<String>,
     verbose: bool,
     no_clean: bool,
     cmp2index: bool,
+    interactive: bool,
     debug: bool,
 }
 
@@ -65,10 +74,13 @@ impl ConfigBuilder {
             latexdiff_path: None,
             main_tex: None,
             output: None,
+            new: None,
+            old: None,
             verbose: false,
             debug: false,
             no_clean: false,
             cmp2index: false,
+            interactive: false,
         }
     }
 
@@ -126,6 +138,17 @@ impl ConfigBuilder {
         self
     }
 
+    pub fn new_hash(mut self, hash: Option<String>) -> Self {
+        self.new = hash;
+        self
+    }
+
+    pub fn old_hash(mut self, hash: Option<String>) -> Self {
+        self.old = hash;
+        self
+    }
+
+
     pub fn verbose(mut self, on: bool) -> Self {
         self.verbose = on;
         self
@@ -143,6 +166,11 @@ impl ConfigBuilder {
 
     pub fn cmp2index(mut self, on: bool) -> Self {
         self.cmp2index = on;
+        self
+    }
+
+    pub fn interactive(mut self, on: bool) -> Self {
+        self.interactive = on;
         self
     }
 
@@ -172,10 +200,13 @@ impl ConfigBuilder {
             main_tex: self.main_tex,
             latexdiff_path: self.latexdiff_path.unwrap(),
             output: self.output.unwrap(),
+            new: self.new,
+            old: self.old,
             verbose: self.verbose,
             debug: self.debug,
             no_clean: self.no_clean,
             cmp2index: self.cmp2index,
+            interactive: self.interactive,
         }
     }
 }
