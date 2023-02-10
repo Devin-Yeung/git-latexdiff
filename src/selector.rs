@@ -44,7 +44,7 @@ impl SelectorBuilder {
 #[cfg(not(windows))]
 impl SelectorBuilder {
     pub fn skim_opts(mut self, skim_opts: SkimOptions<'static>) -> SelectorBuilder {
-        self.skim_opts = self.skim_opts;
+        self.skim_opts = skim_opts;
         self
     }
 
