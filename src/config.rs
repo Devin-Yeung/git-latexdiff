@@ -20,11 +20,7 @@ pub struct Config {
     pub main_tex: Option<PathBuf>,
     pub new: Option<String>,
     pub old: Option<String>,
-    pub verbose: bool,
-    pub debug: bool,
     pub no_clean: bool,
-    pub cmp2index: bool,
-    pub interactive: bool,
 }
 
 impl From<Args> for Config {
@@ -35,11 +31,7 @@ impl From<Args> for Config {
             .latexdiff_path(value.latexdiff_path)
             .main_tex(value.main_tex)
             .output(value.output)
-            .verbose(value.verbose)
-            .debug(value.debug)
             .no_clean(value.no_clean)
-            .cmp2index(value.cmp2index)
-            .interactive(value.interactive)
             .new_hash(value.new)
             .old_hash(value.old)
             .build()
@@ -60,11 +52,7 @@ pub struct ConfigBuilder {
     output: Option<PathBuf>,
     new: Option<String>,
     old: Option<String>,
-    verbose: bool,
     no_clean: bool,
-    cmp2index: bool,
-    interactive: bool,
-    debug: bool,
 }
 
 impl ConfigBuilder {
@@ -77,11 +65,7 @@ impl ConfigBuilder {
             output: None,
             new: None,
             old: None,
-            verbose: false,
-            debug: false,
             no_clean: false,
-            cmp2index: false,
-            interactive: false,
         }
     }
 
@@ -149,29 +133,8 @@ impl ConfigBuilder {
         self
     }
 
-
-    pub fn verbose(mut self, on: bool) -> Self {
-        self.verbose = on;
-        self
-    }
-
-    pub fn debug(mut self, on: bool) -> Self {
-        self.debug = on;
-        self
-    }
-
     pub fn no_clean(mut self, on: bool) -> Self {
         self.no_clean = on;
-        self
-    }
-
-    pub fn cmp2index(mut self, on: bool) -> Self {
-        self.cmp2index = on;
-        self
-    }
-
-    pub fn interactive(mut self, on: bool) -> Self {
-        self.interactive = on;
         self
     }
 
@@ -211,11 +174,7 @@ impl ConfigBuilder {
             output: self.output.unwrap(),
             new: self.new,
             old: self.old,
-            verbose: self.verbose,
-            debug: self.debug,
             no_clean: self.no_clean,
-            cmp2index: self.cmp2index,
-            interactive: self.interactive,
         }
     }
 }
@@ -228,9 +187,7 @@ impl Default for ConfigBuilder {
             .latexdiff_path(None)
             .main_tex(None)
             .output(None)
-            .verbose(false)
-            .no_clean(false)
-            .debug(false);
+            .no_clean(false);
 
         builder
     }

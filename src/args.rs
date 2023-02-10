@@ -7,9 +7,6 @@ use crate::logger;
 #[derive(Parser, Clone, Debug)]
 // #[clap(infer_subcommands(true))]
 pub struct Args {
-    /// Enable Interactive Mode.
-    #[clap(long, value_enum, required(false), action = clap::ArgAction::SetTrue, default_value = "false")]
-    pub interactive: bool,
     /// Commit hash of newer version.
     #[clap(long, value_parser, required(false), default_value = None)]
     pub new: Option<String>,
@@ -37,16 +34,9 @@ pub struct Args {
     /// $PWD/diff.pdf by default.
     #[clap(long, short, value_parser, required(false))]
     pub output: Option<PathBuf>,
-    /// Verbose mode
-    #[clap(long, action = clap::ArgAction::SetTrue, default_value = "false")]
-    pub verbose: bool,
     /// Do not clean the intermediate files.
     #[clap(long, action = clap::ArgAction::SetTrue, default_value = "false")]
     pub no_clean: bool,
-    /// Set repo's index(Staging Area) as newer version.
-    /// If enabled, you are only required to provide the commit id of old version
-    #[clap(long, action = clap::ArgAction::SetTrue, default_value = "false")]
-    pub cmp2index: bool,
     /// Specify the log level
     #[clap(long, value_enum, required(false), default_value = "info")]
     pub log_level: logger::LogLevel,
@@ -56,7 +46,4 @@ pub struct Args {
     /// Health Check
     #[clap(long, action = clap::ArgAction::SetTrue, default_value = "false")]
     pub health_check: bool,
-    /// Turn debugging information on
-    #[clap(long, action = clap::ArgAction::SetTrue, default_value = "false")]
-    pub debug: bool,
 }

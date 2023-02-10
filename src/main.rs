@@ -42,14 +42,15 @@ fn main() {
         ]
     ).unwrap();
 
-    if args.debug {
+    let log_level = args.log_level.clone();
+
+    if log_level >= logger::LogLevel::Debug {
         println!("{:#?}", args);
-        println!("{:?}", args.log_level)
     }
 
     let config = Config::from(args);
 
-    if config.debug {
+    if log_level >= logger::LogLevel::Debug  {
         println!("{:#?}", config);
     }
 
