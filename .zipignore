@@ -1,0 +1,7 @@
+build/
+target/
+.git/
+.idea/
+.DS_Store
+*.zip
+*.pdf
