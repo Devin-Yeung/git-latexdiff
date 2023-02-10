@@ -1,3 +1,4 @@
+use std::ffi::{OsStr, OsString};
 use crate::args;
 use args::Args;
 use chrono::prelude::*;
@@ -180,14 +181,22 @@ impl ConfigBuilder {
             None => std::env::current_dir().unwrap(),
         };
 
+        let file_name = match path.is_file() {
+            true => {
+                OsString::from(path.file_name().unwrap())
+            },
+            false => OsString::from("diff.pdf")
+        };
+
+        if path.is_file() {
+            path.pop();
+        }
+
         // turn to absolute
         if !path.is_absolute() {
             path = fs::canonicalize(path).unwrap()
         }
-        // if given is a dir not a file, specify a file
-        if path.is_dir() {
-            path.push("diff.pdf");
-        }
+        path.push(file_name);
 
         self.output = Some(path);
         self

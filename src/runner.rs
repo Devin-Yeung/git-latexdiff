@@ -116,9 +116,8 @@ impl Runner {
         let mut diff_pdf = tex.config.main_tex;
         diff_pdf.set_extension("pdf");
 
-        let mut out_pdf = std::env::current_dir().unwrap();
-        out_pdf.push("diff.pdf");
-        fs::copy(diff_pdf, out_pdf).unwrap(); // TODO: add error type
+        fs::copy(diff_pdf, &self.config.output).unwrap(); // TODO: add error type
+        info!("Diff result placed in {}", &self.config.output.display());
 
         self.abort(Ok(()));
     }
