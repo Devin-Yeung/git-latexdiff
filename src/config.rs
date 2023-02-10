@@ -6,11 +6,9 @@ use chrono::prelude::*;
 use std::fs;
 use std::path::PathBuf;
 
-use derivative::Derivative;
 use crate::error::{Error, ErrorKind};
 
-#[derive(Derivative)]
-#[derivative(Debug)]
+#[derive(Debug)]
 pub struct Config {
     pub repo_dir: PathBuf,
     pub tmp_dir: PathBuf,
