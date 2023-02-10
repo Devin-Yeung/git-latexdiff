@@ -2,7 +2,6 @@ use std::error;
 use std::fmt;
 use std::path::PathBuf;
 
-
 /// An error that can occur in this app.
 #[derive(Clone, Debug)]
 pub struct Error {
@@ -90,7 +89,7 @@ impl fmt::Display for Error {
             }
             ErrorKind::InvalidCommitHash => {
                 write!(f, "Invalid commit hash")
-            },
+            }
             ErrorKind::__NonExhaustive => unreachable!(),
         }
     }

@@ -1,8 +1,8 @@
-use clap::Parser;
-use std::path::PathBuf;
 use crate::latex;
-use latex::Engine;
 use crate::logger;
+use clap::Parser;
+use latex::Engine;
+use std::path::PathBuf;
 
 #[derive(Parser, Clone, Debug)]
 // #[clap(infer_subcommands(true))]

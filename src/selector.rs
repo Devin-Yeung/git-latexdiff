@@ -1,6 +1,6 @@
-use git2::{Oid, Repository};
 use crate::error::{Error, ErrorKind};
-use crate::runner;
+use git2::{Oid, Repository};
+
 use crossterm::style::Stylize;
 
 #[cfg(not(windows))]
@@ -8,7 +8,6 @@ use skim::prelude::*;
 
 #[cfg(not(windows))]
 use crate::item::Item;
-
 
 #[cfg(windows)]
 pub struct SelectorBuilder {
@@ -36,7 +35,7 @@ pub struct Selector {
 impl SelectorBuilder {
     pub fn build(self) -> Selector {
         Selector {
-            fzf_opts: self.fzf_opts
+            fzf_opts: self.fzf_opts,
         }
     }
 }
@@ -64,9 +63,7 @@ impl SelectorBuilder {
 impl Default for SelectorBuilder {
     #[cfg(windows)]
     fn default() -> Self {
-        SelectorBuilder {
-            fzf_opts: ()
-        }
+        SelectorBuilder { fzf_opts: () }
     }
 
     #[cfg(not(windows))]
@@ -115,8 +112,7 @@ impl Selector {
         Skim::run_with(&self.skim_opts, Some(rx)).unwrap()
     }
 
-    fn parse(out: SkimOutput) -> std::result::Result<Oid, Error>
-    {
+    fn parse(out: SkimOutput) -> std::result::Result<Oid, Error> {
         if out.is_abort {
             return Err(Error::new(ErrorKind::SkimAbort));
         }

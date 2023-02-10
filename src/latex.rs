@@ -6,14 +6,13 @@ use std::fs::File;
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
 
+use crate::config;
+use crate::error::{Error, ErrorKind};
+use clap::ValueEnum;
 use grep::regex::RegexMatcher;
 use grep::searcher::sinks::UTF8;
 use grep::searcher::{BinaryDetection, SearcherBuilder};
 use walkdir::WalkDir;
-use clap::ValueEnum;
-use crate::config;
-use crate::error::{Error, ErrorKind};
-use crate::error::ErrorKind::MainTeXNotFound;
 
 pub struct LaTeX {
     pub config: Config,
@@ -30,7 +29,6 @@ pub struct ConfigBuilder {
     main_tex: Option<PathBuf>,
     abort_if_error: bool,
 }
-
 
 impl Default for ConfigBuilder {
     fn default() -> Self {
@@ -82,7 +80,7 @@ impl ConfigBuilder {
         };
     }
 
-    pub fn build(mut self) -> std::result::Result<Config, Error> {
+    pub fn build(self) -> std::result::Result<Config, Error> {
         let main_tex = self.guess_main_tex()?;
         Ok(Config {
             project_dir: self.project_dir,
@@ -90,7 +88,6 @@ impl ConfigBuilder {
             abort_if_error: self.abort_if_error,
         })
     }
-
 
     fn main_searcher(path: &PathBuf) -> Vec<PathBuf> {
         // See https://github.com/BurntSushi/ripgrep/blob/master/crates/grep/examples/simplegrep.rs
@@ -134,7 +131,6 @@ impl ConfigBuilder {
         matches
     }
 }
-
 
 impl LaTeX {
     pub fn new(config: Config) -> LaTeX {
@@ -185,11 +181,17 @@ impl LaTeX {
 
         // TODO: Refactor this later
         match (ecode.success(), self.config.abort_if_error) {
-            (true, _) => { info!("{}", "Compilation SUCCESS".green().bold().underlined()) }
-            (false, false) => { warn!("{}", "Compilation FAIL".yellow().bold().underlined()) }
+            (true, _) => {
+                info!("{}", "Compilation SUCCESS".green().bold().underlined())
+            }
+            (false, false) => {
+                warn!("{}", "Compilation FAIL".yellow().bold().underlined())
+            }
             (false, true) => {
                 error!("{}", "Compilation FAIL".red().bold().underlined());
-                return Err(Error::new(ErrorKind::CompileError(String::from("pdflatex"))));
+                return Err(Error::new(ErrorKind::CompileError(String::from(
+                    "pdflatex",
+                ))));
             }
         }
 
@@ -204,7 +206,7 @@ impl LaTeX {
                 if aux.is_none() {
                     return match self.config.abort_if_error {
                         true => Err(Error::new(ErrorKind::CompileError(String::from("bibtex")))), // TODO: Maybe add a new error kind
-                        false => Ok(&self)
+                        false => Ok(&self),
                     };
                 }
                 let mut aux = aux.unwrap();
@@ -235,8 +237,12 @@ impl LaTeX {
 
         // TODO: Refactor this later
         match (ecode.success(), self.config.abort_if_error) {
-            (true, _) => { info!("{}", "Compilation SUCCESS".green().bold().underlined()) }
-            (false, false) => { warn!("{}", "Compilation FAIL".yellow().bold().underlined()) }
+            (true, _) => {
+                info!("{}", "Compilation SUCCESS".green().bold().underlined())
+            }
+            (false, false) => {
+                warn!("{}", "Compilation FAIL".yellow().bold().underlined())
+            }
             (false, true) => {
                 error!("{}", "Compilation FAIL".red().bold().underlined());
                 return Err(Error::new(ErrorKind::CompileError(String::from("bibtex"))));
@@ -280,8 +286,10 @@ impl LaTeX {
                 let bbl = self.ext_finder("bbl").pop();
                 if bbl.is_none() {
                     return match self.config.abort_if_error {
-                        true => Err(Error::new(ErrorKind::CompileError(String::from("latexpand")))), // TODO: Maybe add a new error kind
-                        false => Ok(&self)
+                        true => Err(Error::new(ErrorKind::CompileError(String::from(
+                            "latexpand",
+                        )))), // TODO: Maybe add a new error kind
+                        false => Ok(&self),
                     };
                 }
                 bbl.unwrap()
@@ -308,11 +316,17 @@ impl LaTeX {
 
         // TODO: Refactor this later
         match (ecode.success(), self.config.abort_if_error) {
-            (true, _) => { info!("{}", "Compilation SUCCESS".green().bold().underlined()) }
-            (false, false) => { warn!("{}", "Compilation FAIL".yellow().bold().underlined()) }
+            (true, _) => {
+                info!("{}", "Compilation SUCCESS".green().bold().underlined())
+            }
+            (false, false) => {
+                warn!("{}", "Compilation FAIL".yellow().bold().underlined())
+            }
             (false, true) => {
                 error!("{}", "Compilation FAIL".red().bold().underlined());
-                return Err(Error::new(ErrorKind::CompileError(String::from("latexpand"))));
+                return Err(Error::new(ErrorKind::CompileError(String::from(
+                    "latexpand",
+                ))));
             }
         }
 
@@ -347,12 +361,15 @@ impl LaTeX {
 
         // TODO: Refactor this later
         match ecode.success() {
-            true => { info!("{}", "Diff SUCCESS".green().bold().underlined()) }
-            false => { error!("{}", "Diff FAIL".red().bold().underlined()) }
+            true => {
+                info!("{}", "Diff SUCCESS".green().bold().underlined())
+            }
+            false => {
+                error!("{}", "Diff FAIL".red().bold().underlined())
+            }
         }
     }
 }
-
 
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Debug, ValueEnum)]
 pub enum Engine {

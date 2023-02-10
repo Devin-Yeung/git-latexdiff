@@ -1,12 +1,10 @@
-use std::ffi::{OsStr, OsString};
 use crate::args;
 use args::Args;
 use chrono::prelude::*;
+use std::ffi::OsString;
 
 use std::fs;
 use std::path::PathBuf;
-
-use crate::error::{Error, ErrorKind};
 
 #[derive(Debug)]
 pub struct Config {
@@ -76,7 +74,7 @@ impl ConfigBuilder {
                     false => fs::canonicalize(repo_dir).unwrap_or(
                         // if the given relative dir does not exist
                         // fallback to current dir.
-                        std::env::current_dir().unwrap()
+                        std::env::current_dir().unwrap(),
                     ),
                 }
             }
@@ -143,10 +141,8 @@ impl ConfigBuilder {
         };
 
         let file_name = match path.is_file() {
-            true => {
-                OsString::from(path.file_name().unwrap())
-            },
-            false => OsString::from("diff.pdf")
+            true => OsString::from(path.file_name().unwrap()),
+            false => OsString::from("diff.pdf"),
         };
 
         if path.is_file() {
@@ -179,7 +175,7 @@ impl ConfigBuilder {
 
 impl Default for ConfigBuilder {
     fn default() -> Self {
-        let mut builder = ConfigBuilder::new()
+        let builder = ConfigBuilder::new()
             .repo_dir(None)
             .tmp_dir(None)
             .latexdiff_path(None)
