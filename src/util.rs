@@ -2,12 +2,12 @@ use crossterm::style::Stylize;
 use std::io::Write;
 use which::which;
 
-fn health_check() -> std::io::Result<()> {
+pub fn health_check() {
     // TODO: executable can also be passed by config
-    let stdout = std::io::stdout();
-    let mut stdout = stdout.lock();
+    let mut stdout = std::io::stdout();
 
     let bins = vec![
+        "perl",
         "latexdiff",
         "latexdiff-so",
         "latexpand",
@@ -29,7 +29,7 @@ fn health_check() -> std::io::Result<()> {
                 ready = false;
             }
         }
-        writeln!(stdout, "Binary for {}: {}", bin, msg)?;
+        writeln!(stdout, "Binary for {}: {}", bin, msg).unwrap();
     }
 
     let msg;
@@ -41,7 +41,5 @@ fn health_check() -> std::io::Result<()> {
             msg = "✘".red();
         }
     }
-    writeln!(stdout, "Ready? {}", msg)?;
-
-    Ok(())
+    writeln!(stdout, "Ready? {}", msg).unwrap();
 }

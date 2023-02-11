@@ -26,6 +26,11 @@ use simplelog::*;
 fn main() {
     let args: args::Args = args::Args::parse();
 
+    if args.health_check {
+        util::health_check();
+        return;
+    }
+
     // Init the global logger
     CombinedLogger::init(vec![TermLogger::new(
         args.log_level.clone().to_level_filter(),
