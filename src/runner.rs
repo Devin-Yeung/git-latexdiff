@@ -132,7 +132,8 @@ impl Runner {
         let mut diff_pdf = tex.config.main_tex;
         diff_pdf.set_extension("pdf");
 
-        fs::copy(diff_pdf, &self.config.output).unwrap(); // TODO: add error type
+        fs::copy(diff_pdf, &self.config.output)
+            .map_err(|_| Error::new(ErrorKind::UncategorizedError))?;
         info!("Diff result placed in {}", &self.config.output.display());
 
         self.abort(Ok(()));
@@ -142,11 +143,11 @@ impl Runner {
         // check the tmp dir existence
         let mut tmp_dir = self.config.tmp_dir.clone();
         tmp_dir.push("old");
-        fs::create_dir_all(tmp_dir.as_path()).expect("TODO: panic message");
+        fs::create_dir_all(tmp_dir.as_path()).unwrap();
         tmp_dir.pop();
 
         tmp_dir.push("new");
-        fs::create_dir_all(tmp_dir.as_path()).expect("TODO: panic message");
+        fs::create_dir_all(tmp_dir.as_path()).unwrap();
     }
 
     pub fn abort(&mut self, err: std::result::Result<(), Error>) -> ! {
