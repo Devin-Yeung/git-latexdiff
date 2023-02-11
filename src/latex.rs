@@ -351,6 +351,7 @@ impl LaTeX {
         command
             .arg(&old)
             .arg(&new)
+            .args(&config.latexdiff_args)
             // .arg("--flatten") // FIXME: Sometimes Strange, So remove this args
             .stderr(Stdio::null()) // TODO: Maybe pipe to log?
             .stdout(stdio);

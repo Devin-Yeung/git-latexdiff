@@ -1,3 +1,4 @@
+use std::ffi::OsString;
 use crate::latex;
 use crate::logger;
 use clap::Parser;
@@ -43,6 +44,9 @@ pub struct Args {
     /// Specify the path of latexdiff executable
     #[clap(long, value_parser, required(false))]
     pub latexdiff_path: Option<PathBuf>,
+    /// Extra args that to be passed into latexdiff
+    #[clap(long, value_parser, allow_hyphen_values = true, required(false))]
+    pub latexdiff_args: Vec<OsString>,
     /// Health Check
     #[clap(long, action = clap::ArgAction::SetTrue, default_value = "false")]
     pub health_check: bool,

@@ -11,6 +11,7 @@ pub struct Config {
     pub repo_dir: PathBuf,
     pub tmp_dir: PathBuf,
     pub latexdiff_path: PathBuf,
+    pub latexdiff_args: Vec<OsString>,
     pub output: PathBuf,
     // FIXME: main tex in different version may differ, fix this
     pub main_tex: Option<PathBuf>,
@@ -25,6 +26,7 @@ impl From<Args> for Config {
             .repo_dir(value.repo_dir)
             .tmp_dir(value.tmp_dir)
             .latexdiff_path(value.latexdiff_path)
+            .latexdiff_args(value.latexdiff_args)
             .main_tex(value.main_tex)
             .output(value.output)
             .no_clean(value.no_clean)
@@ -44,6 +46,7 @@ pub struct ConfigBuilder {
     repo_dir: Option<PathBuf>,
     tmp_dir: Option<PathBuf>,
     latexdiff_path: Option<PathBuf>,
+    latexdiff_args: Vec<OsString>,
     main_tex: Option<PathBuf>,
     output: Option<PathBuf>,
     new: Option<String>,
@@ -57,6 +60,7 @@ impl ConfigBuilder {
             repo_dir: None,
             tmp_dir: None,
             latexdiff_path: None,
+            latexdiff_args: Vec::new(),
             main_tex: None,
             output: None,
             new: None,
@@ -119,6 +123,11 @@ impl ConfigBuilder {
         self
     }
 
+    pub fn latexdiff_args(mut self, args: Vec<OsString>) -> Self {
+        self.latexdiff_args = args;
+        self
+    }
+
     pub fn new_hash(mut self, hash: Option<String>) -> Self {
         self.new = hash;
         self
@@ -165,6 +174,7 @@ impl ConfigBuilder {
             tmp_dir: self.tmp_dir.unwrap(),
             main_tex: self.main_tex,
             latexdiff_path: self.latexdiff_path.unwrap(),
+            latexdiff_args: self.latexdiff_args,
             output: self.output.unwrap(),
             new: self.new,
             old: self.old,
